@@ -13,6 +13,10 @@
 //   Steady - two trades per day max, 1:2 risk/reward, small daily caps.
 //            Takes ~2-4 weeks, best chance of passing AND getting paid if the
 //            strategy has a real edge.
+//   DirectWeek - for a LucidDirect 50K (no evaluation). One trade per day aiming
+//            for ~$640, so 5 winning days in a row = $3,000+ with no day above
+//            the 20% consistency limit = first payout in one week. Risks $1,150
+//            per day (fits a $1,200 DLL). One losing day pushes the payout back.
 //
 // Nothing here guarantees profit. Run it in Sim / Strategy Analyzer first.
 
@@ -26,7 +30,7 @@ using NinjaTrader.NinjaScript;
 
 namespace NinjaTrader.NinjaScript.Strategies
 {
-    public enum LucidBotMode { Sprint, Steady }
+    public enum LucidBotMode { Sprint, Steady, DirectWeek }
 
     public class LucidOrbBot : Strategy
     {
@@ -81,6 +85,15 @@ namespace NinjaTrader.NinjaScript.Strategies
                     MaxTradesPerDay = 1;
                     DailyProfitCap = 1000;
                     DailyLossStop = 1900;
+                }
+                else if (Mode == LucidBotMode.DirectWeek)
+                {
+                    RiskDollars = 1150;
+                    RewardRisk = 640.0 / 1150.0;
+                    MaxTradesPerDay = 1;
+                    DailyProfitCap = 640;
+                    DailyLossStop = 1150;
+                    ProfitTarget = 3200;
                 }
             }
         }
@@ -153,7 +166,8 @@ namespace NinjaTrader.NinjaScript.Strategies
             // consistency: a full win today must not push the day above DailyProfitCap by much
             double targetPts = stopPts * RewardRisk;
             double winDollars = qty * targetPts * pointValue;
-            double maxWin = DailyProfitCap * 1.10 - Math.Max(0, dayPnl);
+            double capFactor = Mode == LucidBotMode.DirectWeek ? 1.0 : 1.10; // 20% rule leaves no slack
+            double maxWin = DailyProfitCap * capFactor - Math.Max(0, dayPnl);
             if (winDollars > maxWin && maxWin > 0)
                 targetPts = Math.Max(TickSize * 4, maxWin / (qty * pointValue));
 
