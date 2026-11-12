@@ -36,6 +36,7 @@ function start() {
   conn.on(WebcastEvent.GIFT, (d) => send("gift", {
     ...who(d),
     giftName: d.giftDetails?.giftName ?? d.giftName,
+    giftPictureUrl: d.giftDetails?.giftImage?.giftPictureUrl ?? d.giftPictureUrl,
     diamondCount: d.giftDetails?.diamondCount ?? d.diamondCount,
     giftType: d.giftDetails?.giftType ?? d.giftType,
     repeatCount: d.repeatCount,

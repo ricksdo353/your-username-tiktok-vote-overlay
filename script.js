@@ -17,6 +17,7 @@
    giftA / giftB      gift names that always count for side A / side B
                       (comma-separated for several, e.g. giftA=Rose,Finger%20Heart).
                       Other gifts count for the side the viewer commented.
+   giftAImg / giftBImg picture for side A / B gifts (Rose and TikTok have built-in pictures)
    giftMult           votes per diamond (default 1)
    likes              votes per like, e.g. likes=0.1 (default 0 = off)
    cooldown           ms between comment votes from the same viewer (default 2000)
@@ -93,10 +94,6 @@
   $("question").textContent = cfg.question;
   if (cfg.hint) $("hint").textContent = cfg.hint;
   // show each side's gift on its card
-  if (cfg.giftA.length) $("giftTagA").textContent = "🎁 " + cfg.giftA.join(" / ");
-  if (cfg.giftB.length) $("giftTagB").textContent = "🎁 " + cfg.giftB.join(" / ");
-  $("giftTagA").classList.toggle("hidden", !cfg.giftA.length);
-  $("giftTagB").classList.toggle("hidden", !cfg.giftB.length);
   if (cfg.leftPos) $("imgA").style.objectPosition = cfg.leftPos;
   if (cfg.rightPos) $("imgB").style.objectPosition = cfg.rightPos;
   $("nameA").textContent = cfg.left;
@@ -105,6 +102,40 @@
   $("imgB").src = cfg.rightImg || placeholder("2", "#d17bff", "#4b14b5");
   $("imgA").onerror = () => ($("imgA").src = placeholder("1", "#5fd0ff", "#1456c9"));
   $("imgB").onerror = () => ($("imgB").src = placeholder("2", "#d17bff", "#4b14b5"));
+
+  /* ---------- Gift pictures ---------- */
+  // Built-in pictures for common gifts; others are learned from live gift events.
+  const giftIcons = {
+    rose: "images/gifts/rose.png",
+    tiktok: "images/gifts/tiktok.png",
+  };
+  if (P.get("giftAImg")) cfg.giftA.forEach((g) => (giftIcons[g.toLowerCase()] = P.get("giftAImg")));
+  if (P.get("giftBImg")) cfg.giftB.forEach((g) => (giftIcons[g.toLowerCase()] = P.get("giftBImg")));
+  const giftIcon = (name) => giftIcons[String(name || "").toLowerCase()] || "";
+
+  function giftNode(name) {
+    const span = document.createElement("span");
+    span.className = "gift-item";
+    const url = giftIcon(name);
+    if (url) {
+      const img = document.createElement("img");
+      img.className = "gift-icon"; img.alt = ""; img.src = url;
+      img.onerror = () => img.replaceWith(document.createTextNode("🎁"));
+      span.appendChild(img);
+    } else span.append("🎁");
+    span.append(" " + name);
+    return span;
+  }
+
+  function drawGiftChips() {
+    [["giftTagA", cfg.giftA], ["giftTagB", cfg.giftB]].forEach(([id, list]) => {
+      const el = $(id);
+      el.replaceChildren();
+      list.forEach((g, i) => { if (i) el.append(" / "); el.appendChild(giftNode(g)); });
+      el.classList.toggle("hidden", !list.length);
+    });
+  }
+  drawGiftChips();
 
   /* ---------- Rendering ---------- */
   const fmt = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1) + "M" : n >= 1e4 ? (n / 1e3).toFixed(1) + "K" : String(Math.floor(n)));
@@ -132,13 +163,19 @@
     setTimeout(() => el.classList.remove("bump"), 150);
   }
 
-  function feed(text, side) {
+  function feed(text, side, icon) {
     const box = $("feed");
     const div = document.createElement("div");
     div.className = "item " + side;
-    div.textContent = text;
+    if (icon) {
+      const img = document.createElement("img");
+      img.className = "gift-icon"; img.alt = ""; img.src = icon;
+      img.onerror = () => img.replaceWith(document.createTextNode("🎁"));
+      div.append(img, " ");
+    }
+    div.append(text);
     box.appendChild(div);
-    while (box.children.length > 5) box.removeChild(box.firstChild);
+    while (box.children.length > 2) box.removeChild(box.firstChild);
     setTimeout(() => div.remove(), 6000);
   }
 
@@ -224,13 +261,13 @@
     drawTimer();
   }
 
-  function add(side, n = 1, label) {
+  function add(side, n = 1, label, icon) {
     if (side !== "a" && side !== "b") return;
     if (timer.ended) return; // round over: votes locked
     state[side] += n;
     render();
     bump(side);
-    if (label) feed(label, side);
+    if (label) feed(label, side, icon);
   }
 
   function reset() {
@@ -296,9 +333,12 @@
       if (cfg.giftB.some((g) => g.toLowerCase() === name)) side = "b";
       if (!side) return debugLog(`🎁 ${user}: ${name} (לא בחר צד)`); // viewer hasn't picked a side yet
       if (!votingOpen()) return debugLog(`⏸ 🎁 ${user}: ${name} (סבב לא פעיל)`);
+      const pic = d.giftPictureUrl || d.giftDetails?.giftImage?.giftPictureUrl || d.gift?.icon?.url_list?.[0] || "";
+      if (pic && !giftIcon(name)) { giftIcons[name] = pic; drawGiftChips(); }
       const diamonds = (d.diamondCount || 1) * (d.repeatCount || 1);
       const votes = Math.max(1, Math.round(diamonds * cfg.giftMult));
-      add(side, votes, `🎁 ${user} +${votes} → ${side === "a" ? cfg.left : cfg.right}`);
+      const icon = giftIcon(name);
+      add(side, votes, `${icon ? "" : "🎁 "}${user} +${votes} → ${side === "a" ? cfg.left : cfg.right}`, icon);
     }
 
     else if (type === "like" && cfg.likes > 0) {

@@ -357,6 +357,7 @@ Add any of these to your link with `&`.
 |---|---|---|
 | `giftA` | `giftA=Rose` | Gift(s) that always give points to the left side. Several: `giftA=Rose,Finger%20Heart` |
 | `giftB` | `giftB=TikTok` | Gift(s) that always give points to the right side |
+| `giftAImg` / `giftBImg` | `giftAImg=images/gifts/heart.png` | Picture for that side's gift. Rose and TikTok already have built-in pictures; other gifts get their picture automatically from the first one sent |
 | `giftMult` | `giftMult=2` | Votes per gift diamond. Default: *1* |
 | `likes` | `likes=0.1` | Votes per like (`0.1` = 1 vote per 10 likes). Default: *off* |
 | `cooldown` | `cooldown=5000` | Wait time between a viewer's comment votes, in milliseconds. Default: *2000* (2 sec) |
@@ -434,5 +435,6 @@ On GitHub Pages, changes can take ~1 minute to appear.
 | `control.html` | Remote control panel (phone / browser) |
 | `style.css` | Colors, layout, animations |
 | `script.js` | Voting, timer, TikTok connection |
+| `images/gifts/` | Rose and TikTok gift pictures |
 | `server.js` | Optional helper (Option B) |
 | `package.json` | List of what `server.js` needs |
