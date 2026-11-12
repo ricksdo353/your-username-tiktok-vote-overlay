@@ -75,8 +75,9 @@ You will choose **one** helper program in Step 5:
 
 **Overlay link** (paste into TikTok LIVE Studio → Sources → Link, 1080×1920).
 10-minute rounds started from the control panel, Hebrew text.
-Gifts: 🌹 Rose (1 coin) and Perfume (20 coins) = Netanyahu; TikTok (1 coin) and Love you
-(20 coins) = Eisenkot. Every coin = 1 point. Other gifts count for the side the viewer commented:
+Gifts: 🌹 Rose (1 coin) and Perfume (20 coins) = Netanyahu; TikTok (1 coin) and Traffic Cone
+(20 coins) = Eisenkot. Prices checked against the Israel gift list on
+[streamtoearn.io](https://streamtoearn.io/gifts?region=IL). Every coin = 1 point. Other gifts count for the side the viewer commented:
 
 ```
 https://ricksdo353.github.io/your-username-tiktok-vote-overlay/?left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98&leftImg=images/netanyahu.jpg&rightImg=images/eisenkot.jpg&q=%D7%9E%D7%99%20%D7%99%D7%A0%D7%A6%D7%97%3F&hint=%D7%9B%D7%AA%D7%91%D7%95%201%20%D7%90%D7%95%202%20%C2%B7%20%D7%9E%D7%AA%D7%A0%D7%95%D7%AA%20%3D%20%D7%A0%D7%A7%D7%95%D7%93%D7%95%D7%AA&timer=10%3A00&autostart=0&giftA=Rose&giftB=TikTok
@@ -358,7 +359,7 @@ Add any of these to your link with `&`.
 |---|---|---|
 | `giftA` | `giftA=Rose` | Gift(s) that always give points to the left side. Several: `giftA=Rose,Finger%20Heart` |
 | `giftB` | `giftB=TikTok` | Gift(s) that always give points to the right side |
-| `giftAImg` / `giftBImg` | `giftAImg=images/gifts/heart.png` | Picture for that side's gift. Rose, TikTok, Perfume and Love you already have built-in pictures; other gifts get their picture automatically from the first one sent |
+| `giftAImg` / `giftBImg` | `giftAImg=images/gifts/heart.png` | Picture for that side's gift. Rose, TikTok, Perfume and Traffic Cone already have built-in pictures; other gifts get their picture automatically from the first one sent |
 | `giftMult` | `giftMult=2` | Votes per gift diamond. Default: *1* |
 | `likes` | `likes=0.1` | Votes per like (`0.1` = 1 vote per 10 likes). Default: *off* |
 | `cooldown` | `cooldown=5000` | Wait time between a viewer's comment votes, in milliseconds. Default: *2000* (2 sec) |
@@ -376,7 +377,7 @@ Add any of these to your link with `&`.
 
 **Full example:**
 ```
-…/?left=Goku&right=Naruto&leftImg=left.png&rightImg=right.png&timer=3:00&giftA=Rose%2CPerfume&giftB=TikTok%2CLove%20you&likes=0.05
+…/?left=Goku&right=Naruto&leftImg=left.png&rightImg=right.png&timer=3:00&giftA=Rose%2CPerfume&giftB=TikTok%2CTraffic%20Cone&likes=0.05
 ```
 
 ## Keyboard controls
@@ -436,6 +437,6 @@ On GitHub Pages, changes can take ~1 minute to appear.
 | `control.html` | Remote control panel (phone / browser) |
 | `style.css` | Colors, layout, animations |
 | `script.js` | Voting, timer, TikTok connection |
-| `images/gifts/` | Gift pictures: Rose, TikTok, Perfume, Love you |
+| `images/gifts/` | Gift pictures: Rose, TikTok, Perfume, Traffic Cone |
 | `server.js` | Optional helper (Option B) |
 | `package.json` | List of what `server.js` needs |

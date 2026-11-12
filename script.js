@@ -109,7 +109,7 @@
     rose: "images/gifts/rose.png",
     tiktok: "images/gifts/tiktok.png",
     perfume: "images/gifts/perfume.png",
-    "love you": "images/gifts/love-you.png",
+    "traffic cone": "images/gifts/traffic-cone.png",
   };
   if (P.get("giftAImg")) cfg.giftA.forEach((g) => (giftIcons[g.toLowerCase()] = P.get("giftAImg")));
   if (P.get("giftBImg")) cfg.giftB.forEach((g) => (giftIcons[g.toLowerCase()] = P.get("giftBImg")));

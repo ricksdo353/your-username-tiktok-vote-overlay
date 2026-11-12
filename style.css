@@ -193,3 +193,4 @@ body.preview {
 .card-b .tag.gift { flex-direction: row; }
 .gift-item { white-space: nowrap; }
 .tag.gift:not(.hidden) { padding: 4px 26px 4px 14px; box-sizing: content-box; }
+.tag.gift:not(.hidden) { font-size: 28px; gap: 14px; padding: 4px 18px 4px 10px; }
