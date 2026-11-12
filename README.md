@@ -19,6 +19,9 @@ Viewers comment **1** or **2** to vote, gifts give bonus votes, and a timer anno
 - [Step 5: Connect to TikTok](#step-5-connect-to-tiktok)
 - [Step 6: Add the overlay to your stream](#step-6-add-the-overlay-to-your-stream)
 
+**Ready-made link**
+- [🇮🇱 נתניהו נגד איזנקוט](#-ready-made-נתניהו-נגד-איזנקוט)
+
 **Using it**
 - [✅ Every-stream checklist](#-every-stream-checklist)
 
@@ -60,6 +63,21 @@ You will choose **one** helper program in Step 5:
 - ☐ A Windows or Mac computer
 - ☐ **TikTok LIVE Studio** or **OBS Studio** for streaming
 - ☐ Two character pictures (square PNG or JPG looks best)
+
+---
+
+## 🇮🇱 Ready-made: נתניהו נגד איזנקוט
+
+Paste this link into your streaming app (needs GitHub Pages turned on, Step 1 Way A).
+10-minute rounds, Hebrew title and text, photos from Wikimedia Commons:
+
+```
+https://ricksdo353.github.io/your-username-tiktok-vote-overlay/?left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98&leftImg=https%3A%2F%2Fcommons.wikimedia.org%2Fwiki%2FSpecial%3AFilePath%2FBenjamin_Netanyahu%2C_February_2023.jpg%3Fwidth%3D600&rightImg=https%3A%2F%2Fcommons.wikimedia.org%2Fwiki%2FSpecial%3AFilePath%2FGadi-Eizenkot-at-Combat-Engineering-Memorial-2016.jpg%3Fwidth%3D600&q=%D7%9E%D7%99%20%D7%99%D7%A0%D7%A6%D7%97%3F&hint=%D7%9B%D7%AA%D7%91%D7%95%201%20%D7%90%D7%95%202%20%C2%B7%20%D7%9E%D7%AA%D7%A0%D7%95%D7%AA%20%3D%20%D7%A7%D7%95%D7%9C%D7%95%D7%AA%20%D7%91%D7%95%D7%A0%D7%95%D7%A1&timer=10%3A00
+```
+
+Photos: [Benjamin Netanyahu, February 2023](https://commons.wikimedia.org/wiki/File:Benjamin_Netanyahu,_February_2023.jpg)
+and [Gadi Eizenkot at Combat Engineering Memorial 2016](https://commons.wikimedia.org/wiki/File:Gadi-Eizenkot-at-Combat-Engineering-Memorial-2016.jpg),
+via Wikimedia Commons (see each page for author and license).
 
 ---
 
@@ -262,6 +280,8 @@ Add any of these to your link with `&`.
 | `leftImg` | `leftImg=left.png` | Left picture (file name or `https://` link) |
 | `rightImg` | `rightImg=right.png` | Right picture |
 | `q` | `q=BEST%20HERO%3F` | Title text. Default: *WHO WINS?* |
+| `hint` | `hint=Type%201%20or%202` | Text under the title |
+| `leftPos` / `rightPos` | `leftPos=center%2010%25` | Which part of the photo to show (moves the face into the circle). Default: *center 20%* |
 
 **Timer**
 

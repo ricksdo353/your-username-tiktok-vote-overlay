@@ -75,6 +75,7 @@ body.preview {
 .avatar-ring img {
   width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
   background: #111; border: 6px solid #0b0620; display: block;
+  object-position: center 20%;
 }
 
 .info { flex: 1; min-width: 0; }
@@ -172,3 +173,8 @@ body.preview {
 @keyframes pulse { 0%,100% { transform: scale(1) rotate(-6deg); } 50% { transform: scale(1.1) rotate(6deg); } }
 @keyframes blink { 50% { opacity: .2; } }
 @keyframes rise  { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+
+/* Hebrew / Arabic text: pick direction from the text itself */
+.title h1, .title .hint, .info h2, .winner-name, .feed .item { unicode-bidi: plaintext; }
+.card-a .info h2 { text-align: left; }
+.card-b .info h2 { text-align: right; }

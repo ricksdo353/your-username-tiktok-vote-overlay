@@ -8,6 +8,9 @@
    left / right       character names
    leftImg / rightImg image URL or local file (put files next to index.html)
    q                  title text (default "WHO WINS?")
+   hint               text under the title (default "Comment 1 or 2 · Gifts = bonus votes")
+   leftPos / rightPos which part of the photo to show, CSS object-position
+                      (default "center 20%", keeps faces in frame)
    ws                 WebSocket event source (default ws://localhost:21213/,
                       which is TikFinity's local API; use ws://localhost:8080
                       for the included server.js relay). ws=off disables it.
@@ -36,6 +39,9 @@
     leftImg: P.get("leftImg") || "",
     rightImg: P.get("rightImg") || "",
     question: P.get("q") || "WHO WINS?",
+    hint: P.get("hint") || "",
+    leftPos: P.get("leftPos") || "",
+    rightPos: P.get("rightPos") || "",
     ws: P.get("ws") || "ws://localhost:21213/",
     giftA: (P.get("giftA") || "").toLowerCase(),
     giftB: (P.get("giftB") || "").toLowerCase(),
@@ -74,6 +80,9 @@
 
   /* ---------- Init UI ---------- */
   $("question").textContent = cfg.question;
+  if (cfg.hint) $("hint").textContent = cfg.hint;
+  if (cfg.leftPos) $("imgA").style.objectPosition = cfg.leftPos;
+  if (cfg.rightPos) $("imgB").style.objectPosition = cfg.rightPos;
   $("nameA").textContent = cfg.left;
   $("nameB").textContent = cfg.right;
   $("imgA").src = cfg.leftImg || placeholder("1", "#5fd0ff", "#1456c9");
