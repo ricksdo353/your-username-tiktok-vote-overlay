@@ -211,7 +211,7 @@
   }
 
   function startTimer(seconds) {
-    if (seconds != null) timer.duration = seconds;
+    if (seconds > 0) timer.duration = seconds; // ignore missing/invalid times
     if (timer.duration <= 0) return;
     timer.remaining = timer.duration;
     timer.ended = false;
@@ -274,6 +274,7 @@
 
   function reset() {
     state.a = state.b = 0;
+    likeCarry.a = likeCarry.b = 0;
     lastVote.clear();
     viewerSide.clear();
     render();
@@ -404,7 +405,7 @@
       case "resume": resume(); break;
       case "toggle": timer.running ? pause() : resume(); break;
       case "reset":  reset(); break;
-      case "end":    if (timer.running || timer.duration > 0) finishRound(); break;
+      case "end":    finishRound(); break;
       case "timer":
         timer.duration = Math.max(0, parseTime(x || "0"));
         if (!timer.running) { timer.remaining = timer.duration; timer.ended = false; $("winner").classList.add("hidden"); }

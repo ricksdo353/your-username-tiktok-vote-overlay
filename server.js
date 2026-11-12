@@ -1,7 +1,7 @@
 // Relay: TikTok LIVE  ->  this server  ->  ws://localhost:8080  ->  overlay
 // Usage:  node server.js your_tiktok_username
 // Then open the overlay with  ?ws=ws://localhost:8080
-const { TikTokLiveConnection, WebcastEvent } = require("tiktok-live-connector");
+const { TikTokLiveConnection, WebcastEvent, ControlEvent } = require("tiktok-live-connector");
 const { WebSocketServer } = require("ws");
 
 const username = (process.argv[2] || process.env.TIKTOK_USER || "").replace(/^@/, "");
@@ -25,15 +25,32 @@ const who = (d) => ({
   nickname: d.user?.nickname ?? d.nickname,
 });
 
-function start() {
-  const conn = new TikTokLiveConnection(username);
-  conn.connect()
-    .then((s) => console.log(`Connected to @${username}'s LIVE (room ${s.roomId})`))
-    .catch((e) => { console.error("Connect failed:", e.message || e, "- retrying in 10s"); setTimeout(start, 10000); });
+let conn = null;
+let retryTimer = null;
 
-  conn.on(WebcastEvent.CHAT, (d) => send("chat", { ...who(d), comment: d.comment }));
-  conn.on(WebcastEvent.LIKE, (d) => send("like", { ...who(d), likeCount: d.likeCount }));
-  conn.on(WebcastEvent.GIFT, (d) => send("gift", {
+// Schedule exactly one reconnect, and drop the old connection first,
+// so a stream end + disconnect can never leave two live connections
+// (which would count every comment and gift twice).
+function scheduleRetry(reason) {
+  if (retryTimer) return;
+  console.log(`${reason} - retrying in 10s`);
+  const old = conn;
+  conn = null;
+  if (old) { old.removeAllListeners(); old.disconnect().catch(() => {}); }
+  retryTimer = setTimeout(() => { retryTimer = null; start(); }, 10000);
+}
+
+function start() {
+  // processInitialData: false = don't replay comments/gifts from before we connected
+  const c = new TikTokLiveConnection(username, { processInitialData: false });
+  conn = c;
+  c.connect()
+    .then((s) => console.log(`Connected to @${username}'s LIVE (room ${s.roomId})`))
+    .catch((e) => { if (conn === c) scheduleRetry("Connect failed: " + (e.message || e)); });
+
+  c.on(WebcastEvent.CHAT, (d) => send("chat", { ...who(d), comment: d.comment }));
+  c.on(WebcastEvent.LIKE, (d) => send("like", { ...who(d), likeCount: d.likeCount }));
+  c.on(WebcastEvent.GIFT, (d) => send("gift", {
     ...who(d),
     giftName: d.giftDetails?.giftName ?? d.giftName,
     giftPictureUrl: d.giftDetails?.giftImage?.giftPictureUrl ?? d.giftPictureUrl,
@@ -42,7 +59,8 @@ function start() {
     repeatCount: d.repeatCount,
     repeatEnd: d.repeatEnd === undefined ? undefined : !!d.repeatEnd,
   }));
-  conn.on(WebcastEvent.STREAM_END, () => { console.log("Stream ended"); setTimeout(start, 10000); });
-  conn.on("disconnected", () => { console.log("Disconnected - retrying in 10s"); setTimeout(start, 10000); });
+  c.on(WebcastEvent.STREAM_END, () => { if (conn === c) scheduleRetry("Stream ended"); });
+  c.on(ControlEvent.DISCONNECTED, () => { if (conn === c) scheduleRetry("Disconnected"); });
+  c.on(ControlEvent.ERROR, (e) => console.error("Connection error:", e?.message || e));
 }
 start();

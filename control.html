@@ -162,6 +162,7 @@
   store.set("tvo-room", room);
   $("room").addEventListener("input", () => {
     room = $("room").value.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    if ($("room").value !== room) $("room").value = room; // show what is really used
     store.set("tvo-room", room);
     buildLinks();
   });
