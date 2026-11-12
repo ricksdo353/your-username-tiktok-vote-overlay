@@ -108,6 +108,8 @@
   const giftIcons = {
     rose: "images/gifts/rose.png",
     tiktok: "images/gifts/tiktok.png",
+    perfume: "images/gifts/perfume.png",
+    "love you": "images/gifts/love-you.png",
   };
   if (P.get("giftAImg")) cfg.giftA.forEach((g) => (giftIcons[g.toLowerCase()] = P.get("giftAImg")));
   if (P.get("giftBImg")) cfg.giftB.forEach((g) => (giftIcons[g.toLowerCase()] = P.get("giftBImg")));
@@ -131,7 +133,7 @@
     [["giftTagA", cfg.giftA], ["giftTagB", cfg.giftB]].forEach(([id, list]) => {
       const el = $(id);
       el.replaceChildren();
-      list.forEach((g, i) => { if (i) el.append(" / "); el.appendChild(giftNode(g)); });
+      list.forEach((g) => el.appendChild(giftNode(g)));
       el.classList.toggle("hidden", !list.length);
     });
   }
