@@ -75,9 +75,15 @@ Paste this link into your streaming app (needs GitHub Pages turned on, Step 1 Wa
 https://ricksdo353.github.io/your-username-tiktok-vote-overlay/?left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98&leftImg=images/netanyahu.jpg&rightImg=images/eisenkot.jpg&q=%D7%9E%D7%99%20%D7%99%D7%A0%D7%A6%D7%97%3F&hint=%D7%9B%D7%AA%D7%91%D7%95%201%20%D7%90%D7%95%202%20%C2%B7%20%D7%9E%D7%AA%D7%A0%D7%95%D7%AA%20%3D%20%D7%A7%D7%95%D7%9C%D7%95%D7%AA%20%D7%91%D7%95%D7%A0%D7%95%D7%A1&timer=10%3A00
 ```
 
-Photos (cropped to the face):
-- `images/netanyahu.jpg`: [Benjamin Netanyahu, February 2023](https://commons.wikimedia.org/wiki/File:Benjamin_Netanyahu,_February_2023.jpg)
-- `images/eisenkot.jpg`: portrait supplied by the repository owner
+Photo credits:
+- `images/netanyahu.jpg`: Avi Ohayon / Government Press Office of Israel,
+  [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/), via
+  [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Benjamin_Netanyahu,_February_2023.jpg).
+  Cropped to the face; the cropped version is shared under the same license.
+- `images/eisenkot.jpg`: portrait supplied by the repository owner (source not yet confirmed).
+  A freely licensed official portrait is available on
+  [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Gadi_Eisenkot_2_(cropped_-_WD).jpg)
+  (Yahav Trudler / Gadi Eisenkot spokesperson, CC BY-SA 3.0).
 
 ---
 
