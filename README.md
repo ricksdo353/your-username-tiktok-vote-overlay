@@ -288,6 +288,9 @@ and turn demo mode on and off.
 > The overlay and the panel only need the **same room name**. Anyone who knows the
 > room name can control your overlay, so keep it private.
 > The panel sends commands through the free public service **ntfy.sh**; no account needed.
+> The free plan allows about **250 commands per day** from your internet connection. If the
+> panel says the daily limit was reached, use the [keyboard](#keyboard-controls) or
+> [chat commands](#control-from-your-live-chat-optional) for the rest of the day.
 
 ### Control from your LIVE chat (optional)
 
