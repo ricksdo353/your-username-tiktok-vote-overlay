@@ -181,3 +181,4 @@ body.preview {
 
 /* gift chip next to COMMENT tag */
 .tag.gift { background: rgba(255,255,255,.14) !important; border: 2px solid rgba(255,255,255,.35); margin-top: 14px; font-size: 32px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.feed .item { flex-shrink: 0; }

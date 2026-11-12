@@ -56,6 +56,9 @@ You will choose **one** helper program in Step 5:
 
 - Comment **`1`** → +1 vote for the **left (blue)** character
 - Comment **`2`** → +1 vote for the **right (purple)** character
+  (the comment must be exactly `1` or `2`, or the character's full name)
+- With a timer, comments and gifts **only count while a round is running**
+  (not before you start, while paused, or after time is up)
 - Send a **gift** → +1 point per diamond (coin), for the side they commented
 - Or set a **gift per side** (e.g. 🌹 Rose = left, TikTok = right): that gift always counts for that side, even without a comment
 - Each viewer can vote once every 2 seconds (stops spam)
@@ -366,6 +369,7 @@ Add any of these to your link with `&`.
 | `room` | `room=k7m2xq9p` | Control-panel room name (same as in `control.html`) |
 | `host` | `host=myname` | Your TikTok username, enables `!start` etc. in your chat |
 | `preview` | `preview=1` | Dark background for testing |
+| `debug` | `debug=1` | Shows every point (and every ignored comment/gift) at the bottom, to see where points come from |
 | `demo` | `demo=1` | Fake votes for testing |
 
 **Full example:**
@@ -405,6 +409,12 @@ Tip: press `[` / `]` **before** pressing `T` to set the round length.
 
 **Dark background on stream**
 → Remove `preview=1` from your link.
+
+**Score goes up by itself**
+→ Those are real viewers: comments `1`/`2` and gifts (🌹 Rose is very common). With a timer,
+points only count while a round runs, so press **↺ איפוס** before you start.
+→ Add `&debug=1` to the overlay link to see who added every point. Remove it afterwards.
+→ Make sure demo mode is off (🧪 in the control panel, or `D`) and the link has no `demo=1`.
 
 **Gifts don't add votes**
 → The viewer must comment `1` or `2` first, or use `giftA` / `giftB` so certain gifts always count.

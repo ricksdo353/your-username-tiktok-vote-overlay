@@ -20,6 +20,8 @@
    giftMult           votes per diamond (default 1)
    likes              votes per like, e.g. likes=0.1 (default 0 = off)
    cooldown           ms between comment votes from the same viewer (default 2000)
+   debug=1            show every vote / ignored event in the feed (to find
+                      out where points come from)
    room               remote-control room name; open control.html?room=SAME to control
    host               your TikTok username: you can type !start !pause !reset
                       !end !timer 5:00 in your own LIVE chat
@@ -245,6 +247,16 @@
     drawTimer();
   }
 
+  /* ---------- Voting window & debug ---------- */
+  // With a timer, TikTok votes/gifts count only while the round is running.
+  // Without a timer, they always count (until reset).
+  function votingOpen() {
+    if (timer.ended) return false;
+    return timer.duration <= 0 || timer.running;
+  }
+  const DEBUG = P.get("debug") === "1";
+  function debugLog(text, side) { if (DEBUG) feed(text, side || ""); }
+
   /* ---------- TikTok event handling ---------- */
   // Accepts both {event, data} (TikFinity / server.js) and flat objects.
   function handle(msg) {
@@ -259,25 +271,31 @@
         command(text.slice(1));
         return;
       }
+      // Only a comment that is exactly "1" / "2" (or the full name) is a vote
+      const clean = text.replace(/[\s!.?,️⃣]+/g, "");
       let side = null;
-      if (/^(1|a|team ?1)\b/.test(text) || text === cfg.left.toLowerCase()) side = "a";
-      else if (/^(2|b|team ?2)\b/.test(text) || text === cfg.right.toLowerCase()) side = "b";
+      if (clean === "1" || text === cfg.left.toLowerCase()) side = "a";
+      else if (clean === "2" || text === cfg.right.toLowerCase()) side = "b";
       if (!side) return;
       viewerSide.set(id, side);
+      if (!votingOpen()) return debugLog(`⏸ ${user}: ${text} (סבב לא פעיל)`);
       const now = Date.now();
       if (now - (lastVote.get(id) || 0) < cfg.cooldown) return;
       lastVote.set(id, now);
       add(side, 1);
+      debugLog(`💬 ${user} +1 → ${side === "a" ? cfg.left : cfg.right}`, side);
     }
 
     else if (type === "gift") {
       // Streakable gifts send many events; count only the final one.
-      if (d.giftType === 1 && d.repeatEnd === false) return;
+      // repeatEnd can be true/false or 1/0 depending on the connector
+      if (d.giftType === 1 && !d.repeatEnd) return;
       const name = String(d.giftName || d.extendedGiftInfo?.name || "").toLowerCase();
       let side = viewerSide.get(id) || null;
       if (cfg.giftA.some((g) => g.toLowerCase() === name)) side = "a";
       if (cfg.giftB.some((g) => g.toLowerCase() === name)) side = "b";
-      if (!side) return; // viewer hasn't picked a side yet
+      if (!side) return debugLog(`🎁 ${user}: ${name} (לא בחר צד)`); // viewer hasn't picked a side yet
+      if (!votingOpen()) return debugLog(`⏸ 🎁 ${user}: ${name} (סבב לא פעיל)`);
       const diamonds = (d.diamondCount || 1) * (d.repeatCount || 1);
       const votes = Math.max(1, Math.round(diamonds * cfg.giftMult));
       add(side, votes, `🎁 ${user} +${votes} → ${side === "a" ? cfg.left : cfg.right}`);
@@ -285,7 +303,7 @@
 
     else if (type === "like" && cfg.likes > 0) {
       const side = viewerSide.get(id);
-      if (!side) return;
+      if (!side || !votingOpen()) return;
       likeCarry[side] += (d.likeCount || 1) * cfg.likes;
       const whole = Math.floor(likeCarry[side]);
       if (whole > 0) { likeCarry[side] -= whole; add(side, whole); }
