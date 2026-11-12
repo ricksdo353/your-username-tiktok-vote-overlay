@@ -368,7 +368,7 @@ Add any of these to your link with `&`.
 
 | Setting | Example | What it does |
 |---|---|---|
-| `bg` | `bg=panel` | `full` (default): dark animated background like the promo video. `panel`: a dark card over a transparent page. `none`: fully transparent, to sit over a camera |
+| `bg` | `bg=panel` | `full` (default): the promo video's look, 1:1 (same layout, background and effects as its tug-of-war scene). `panel`: a dark card over a transparent page. `none`: fully transparent, to sit over a camera |
 | `bigGift` | `bigGift=500` | Gifts worth this many coins or more get a full-screen takeover. Default: *100* |
 | `takeover` | `takeover=0` | Turn the full-screen gift takeovers off |
 | `countdown` | `countdown=0` | Turn the big 3-2-1 at the end of a round off |

@@ -102,6 +102,21 @@
   /* ---------- Init UI ---------- */
   if (cfg.question) $("question").textContent = cfg.question;
   if (cfg.hint) $("hint").textContent = cfg.hint;
+
+  // background dots (same as the video), drifting upward
+  (function dots() {
+    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const box = $("dots"), cols = ["#5fd0ff", "#d17bff", "#ffffff"];
+    for (let i = 0; i < 26; i++) {
+      const d = document.createElement("i"), sz = [6, 8, 10, 14][(rnd() * 4) | 0];
+      d.style.cssText = `left:${(20 + rnd() * 1040) | 0}px;top:${(rnd() * 1920) | 0}px;width:${sz}px;height:${sz}px;` +
+        `background:${cols[(rnd() * 3) | 0]};opacity:${(0.25 + rnd() * 0.45).toFixed(2)};animation-duration:${(20 + rnd() * 25).toFixed(1)}s`;
+      box.appendChild(d);
+    }
+  })();
+
+  // header alternates: round length (or the question) <-> how to vote
+  setInterval(() => { $("question").classList.toggle("off"); $("hint").classList.toggle("off"); }, 5000);
   // show each side's gift on its card
   if (cfg.leftPos) $("imgA").style.objectPosition = cfg.leftPos;
   if (cfg.rightPos) $("imgB").style.objectPosition = cfg.rightPos;
@@ -171,8 +186,8 @@
 
   function bump(side, strong) {
     anim($(side === "a" ? "cardA" : "cardB"),
-      [{ transform: "scale(1)" }, { transform: `scale(${strong ? 1.12 : 1.06})` }, { transform: "scale(1)" }],
-      { duration: strong ? 380 : 220, easing: "ease-out" });
+      [{ transform: "scale(1)" }, { transform: `scale(${strong ? 1.12 : 1.08})` }, { transform: "scale(1)" }],
+      { duration: 200, easing: "ease-out" });
     anim($(side === "a" ? "barFlashA" : "barFlashB"), [{ opacity: 0.75 }, { opacity: 0 }], { duration: 380, easing: "ease-out" });
   }
 
@@ -186,13 +201,15 @@
     if (!icon) return;
     const img = document.createElement("img");
     img.className = "fly-gift " + side; img.alt = ""; img.src = icon;
-    img.style.left = (side === "a" ? -260 : 1100) + "px"; img.style.top = "995px";
+    img.style.left = (side === "a" ? -300 : 1100) + "px"; img.style.top = "812px";
     $("flyLayer").appendChild(img);
-    const dx = side === "a" ? 680 : -660;
-    const a = anim(img, [{ transform: "translate(0,0) scale(1.2)", opacity: 1 }, { transform: `translate(${dx}px,0) scale(.45)`, opacity: 1 },
-      { transform: `translate(${dx}px,0) scale(.2)`, opacity: 0 }], { duration: 480, easing: "ease-in" });
-    setTimeout(() => img.remove(), 520);
+    const dx = side === "a" ? 710 : -690;
+    const a = anim(img, [{ transform: "translate(0,0) scale(1.4)", opacity: 0 }, { transform: "translate(0,0) scale(1.4)", opacity: 1, offset: 0.15 },
+      { transform: `translate(${dx}px,0) scale(.5)`, opacity: 1, offset: 0.9 }, { transform: `translate(${dx}px,0) scale(.5)`, opacity: 0 }], { duration: 400, easing: "ease-in" });
+    setTimeout(() => img.remove(), 440);
     if (!a) img.remove();
+    setTimeout(() => anim($("dash"), [{ transform: "scale(1) rotate(0)" }, { transform: `scale(1.04) rotate(${side === "a" ? 1.2 : -1.2}deg)`, offset: 0.25 }, { transform: "scale(1) rotate(0)" }],
+      { duration: 330, easing: "ease-out" }), 320);
   }
 
   // a comment bubble flies from the chat strip into the face
@@ -203,10 +220,10 @@
     lastFly = now;
     const b = document.createElement("div");
     b.className = "fly-vote " + side; b.textContent = side === "a" ? "1" : "2";
-    b.style.left = (side === "a" ? 300 : 640) + "px"; b.style.top = "1400px";
+    b.style.left = (side === "a" ? 170 : 790) + "px"; b.style.top = "1420px";
     $("flyLayer").appendChild(b);
     anim(b, [{ transform: "translate(0,0) scale(.6)", opacity: 0 }, { transform: "translate(0,-40px) scale(1)", opacity: 1, offset: 0.2 },
-      { transform: `translate(${side === "a" ? -70 : 70}px,-560px) scale(.6)`, opacity: 1, offset: 0.9 }, { transform: `translate(${side === "a" ? -70 : 70}px,-580px) scale(.3)`, opacity: 0 }],
+      { transform: "translate(0,-800px) scale(.6)", opacity: 1, offset: 0.9 }, { transform: "translate(0,-820px) scale(.3)", opacity: 0 }],
       { duration: 520, easing: "ease-in" });
     setTimeout(() => b.remove(), 560);
   }
@@ -235,6 +252,9 @@
     t.replaceChildren();
     if (icon) { const img = document.createElement("img"); img.src = icon; img.alt = ""; img.onerror = () => img.remove(); t.appendChild(img); }
     const span = document.createElement("span"); span.innerHTML = html; t.appendChild(span);
+    // shrink long names until the pill fits (66px like the video, down to 36px)
+    t.style.fontSize = "66px";
+    for (let fs = 66; fs > 36 && t.scrollWidth > t.clientWidth; fs -= 4) t.style.fontSize = fs + "px";
     document.body.classList.add("toasting");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { t.classList.remove("show"); document.body.classList.remove("toasting"); }, 1600);
@@ -242,16 +262,20 @@
   const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
   // live chat strip: newest message enters on the right
+  let chipRow = 0;
+  const avCols = ["#ffb347", "#7cf2c8", "#ff7bac", "#9fb4ff", "#ffd34d"];
   function chatChip(user, side, icon) {
-    const row = $("tickerRow");
+    const row = $("tickerRow" + (chipRow ^= 1));
     const c = document.createElement("div");
     c.className = "chip";
+    const av = document.createElement("span"); av.className = "av";
+    av.style.background = avCols[[...String(user)].reduce((h, ch) => h + ch.charCodeAt(0), 0) % avCols.length];
     const who = document.createElement("span"); who.className = "who"; who.textContent = user;
-    c.appendChild(who);
+    c.append(av, who);
     if (icon) { const img = document.createElement("img"); img.src = icon; img.alt = ""; img.onerror = () => img.remove(); c.appendChild(img); }
     else { const v = document.createElement("span"); v.className = "v " + side; v.textContent = side === "a" ? "1" : "2"; c.appendChild(v); }
     row.prepend(c);
-    while (row.children.length > 8) row.lastChild.remove();
+    while (row.children.length > 6) row.lastChild.remove();
   }
 
   function feed(text, side, icon) {
@@ -287,7 +311,13 @@
   function drawTimer() {
     const el = $("timer");
     el.classList.toggle("hidden", timer.duration <= 0 && !timer.running);
-    document.body.classList.toggle("no-timer", timer.duration <= 0 && !timer.running);
+    if (!cfg.question) {
+      const mins = Math.round(timer.duration / 60), q = $("question");
+      const html = timer.duration > 0
+        ? (mins >= 1 ? `<span class="grad">${mins} דקות</span> לכל סבב` : `<span class="grad">${timer.duration} שניות</span> לכל סבב`)
+        : `מי <span class="grad">ינצח?</span>`;
+      if (q.innerHTML !== html) q.innerHTML = html;
+    }
     $("timerText").textContent = timer.ended ? "0:00" : mmss(Math.ceil(timer.remaining));
     el.classList.toggle("paused", !timer.running && !timer.ended);
     el.classList.toggle("urgent", timer.running && timer.remaining <= 10);
@@ -317,6 +347,7 @@
     timer.remaining = timer.duration;
     timer.ended = false;
     $("winner").classList.add("hidden");
+    document.body.classList.remove("ended");
     resume();
   }
   function resume() {
@@ -354,13 +385,22 @@
     if (demoTimer) toggleDemo();
     const w = $("winner");
     w.classList.remove("hidden", "a", "b");
+    document.body.classList.add("ended");
     if (state.a === state.b) {
-      $("winnerName").textContent = "צמוד! תיקו";
+      $("winnerName").innerHTML = `צמוד! <span class="grad">תיקו</span>`;
+      $("split").querySelectorAll(".half").forEach((h) => (h.style.opacity = "1"));
+      anim($("split"), [{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 0 }], { duration: 560 });
     } else {
       const side = state.a > state.b ? "a" : "b";
       w.classList.add(side);
-      $("winnerName").textContent = `🏆 ${side === "a" ? cfg.left : cfg.right}`;
+      $("winnerName").textContent = `🏆 ${sideName(side)}`;
+      $("split").querySelectorAll(".half").forEach((h) => (h.style.opacity = h.classList.contains(side) ? "1" : "0"));
+      anim($("split"), [{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 0 }], { duration: 700 });
+      bump(side, true);
     }
+    // restart the line's slam animation
+    w.style.animation = "none"; void w.offsetWidth; w.style.animation = "";
+    shake($("stage"), 22);
     drawTimer();
   }
 
@@ -385,6 +425,7 @@
     timer.ended = false;
     timer.remaining = timer.duration;
     $("winner").classList.add("hidden");
+    document.body.classList.remove("ended");
     drawTimer();
   }
 
@@ -457,7 +498,7 @@
       const diamonds = each * count;
       const votes = Math.max(1, Math.round(diamonds * cfg.giftMult));
       const icon = giftIcon(name);
-      add(side, votes, `${icon ? "" : "🎁 "}${esc(user)} <b class="ltr">+${votes.toLocaleString("en-US")}</b> ל${esc(sideName(side))}`, icon);
+      add(side, votes, `${icon ? "" : "🎁 "}<b class="ltr">+${votes.toLocaleString("en-US")}</b> ל${esc(sideName(side))}`, icon);
       chatChip(user, side, icon);
       flyGift(side, icon);
       if (each >= cfg.bigGift || votes >= cfg.bigGift) takeover(side, icon, votes);
@@ -529,7 +570,7 @@
       case "end":    finishRound(); break;
       case "timer":
         timer.duration = Math.max(0, parseTime(x || "0"));
-        if (!timer.running) { timer.remaining = timer.duration; timer.ended = false; $("winner").classList.add("hidden"); }
+        if (!timer.running) { timer.remaining = timer.duration; timer.ended = false; $("winner").classList.add("hidden"); document.body.classList.remove("ended"); }
         drawTimer(); break;
       case "adjust": adjust(parseInt(x, 10) || 0); break;
       case "add":    add(side, Math.max(1, parseInt(y, 10) || 1)); break;

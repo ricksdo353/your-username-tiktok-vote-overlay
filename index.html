@@ -8,25 +8,34 @@
 </head>
 <body>
   <div id="stage">
-    <!-- background (bg=full, the default; bg=panel or bg=none for a camera stream) -->
+    <!-- background, identical to the promo video (bg=full, the default; bg=panel or bg=none for a camera stream) -->
     <div id="bgfx" class="abs">
-      <div class="glow glow-a"></div><div class="glow glow-b"></div><div class="grid"></div><div class="vignette"></div>
+      <div class="base"></div>
+      <div class="grid"></div>
+      <div class="glow glow-a"></div><div class="glow glow-b"></div>
+      <div class="streaks"><div class="streak s1"></div><div class="streak s2"></div><div class="streak s3"></div></div>
+      <div id="dots"></div>
+      <div class="vignette"></div>
     </div>
     <div id="panel" class="abs"></div>
 
-    <!-- header -->
-    <div id="live" class="abs pill live"><span id="liveDot" class="live-dot"></span>LIVE</div>
-    <h1 id="question" class="abs he center">מי <span class="grad">ינצח?</span></h1>
-    <p id="hint" class="abs he center">כתבו <span class="blue">1</span> או <span class="purple">2</span> <span class="grad">בלייב!</span></p>
-    <div id="timer" class="abs pill hidden"><div id="timerRed" class="abs"></div><span id="timerText">10:00</span></div>
+    <!-- live chat strip (decoration below TikTok's safe area) -->
+    <div id="ticker" class="abs"><div id="tickerRow0" class="tk-row"></div><div id="tickerRow1" class="tk-row"></div></div>
+    <div id="tickerFade" class="abs"></div>
 
-    <!-- face-off -->
     <div id="dash" class="abs">
+      <!-- header: alternates between the round length and how to vote -->
+      <div id="header" class="abs">
+        <h1 id="question" class="abs he center hdr"><span class="grad">10 דקות</span> לכל סבב</h1>
+        <h1 id="hint" class="abs he center hdr off">כתבו <span class="blue">1</span> או <span class="purple">2</span> <span class="grad">בלייב!</span></h1>
+      </div>
+      <div id="timer" class="abs pill hidden"><div id="timerRed" class="abs"></div><span id="timerText">10:00</span></div>
+
       <div id="cardA" class="abs portrait ring-a"><img id="imgA" alt="" /></div>
       <div id="cardB" class="abs portrait ring-b"><img id="imgB" alt="" /></div>
-      <div id="vs" class="abs vs">VS</div>
       <div id="nameA" class="abs name he blue">Player One</div>
       <div id="nameB" class="abs name he purple">Player Two</div>
+      <div id="vs" class="abs vs">VS</div>
 
       <div id="bar" class="abs">
         <div id="barA" class="abs"></div>
@@ -38,18 +47,17 @@
 
       <div id="scoreA" class="abs score">0</div>
       <div id="scoreB" class="abs score">0</div>
+
+      <!-- gift rules sit in the event-pill slot while no event is showing -->
+      <div id="giftTagA" class="abs gift-tag hidden"></div>
+      <div id="giftTagB" class="abs gift-tag hidden"></div>
+      <div id="toast" class="abs he"></div>
+      <div id="winner" class="abs he center hidden"><span id="winnerName"></span></div>
     </div>
-
-    <!-- gifts for each side / gift toast (same spot) -->
-    <div id="giftTagA" class="abs gift-tag hidden"></div>
-    <div id="giftTagB" class="abs gift-tag hidden"></div>
-    <div id="toast" class="abs he"></div>
-
-    <!-- live chat strip (below TikTok's safe area) -->
-    <div id="ticker" class="abs"><div id="tickerRow"></div></div>
 
     <!-- effects -->
     <div id="flyLayer" class="abs"></div>
+    <div id="split" class="abs"><div class="half a"></div><div class="half b"></div></div>
     <div id="takeover" class="abs">
       <div id="tkVal" class="abs gold">+100</div>
       <img id="tkImg" class="abs" alt="" />
@@ -57,10 +65,6 @@
     </div>
     <div id="dim" class="abs"></div>
     <div id="countdown" class="abs">3</div>
-    <div id="winner" class="abs hidden">
-      <div class="winner-label he">נגמר הזמן!</div>
-      <div class="winner-name he" id="winnerName">WINNER</div>
-    </div>
     <div id="feed" class="abs"></div>
     <div id="status" class="abs">offline</div>
   </div>
