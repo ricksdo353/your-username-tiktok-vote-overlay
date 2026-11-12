@@ -15,9 +15,14 @@
                       which is TikFinity's local API; use ws://localhost:8080
                       for the included server.js relay). ws=off disables it.
    giftA / giftB      gift names that always count for side A / side B
+                      (comma-separated for several, e.g. giftA=Rose,Finger%20Heart).
+                      Other gifts count for the side the viewer commented.
    giftMult           votes per diamond (default 1)
    likes              votes per like, e.g. likes=0.1 (default 0 = off)
    cooldown           ms between comment votes from the same viewer (default 2000)
+   room               remote-control room name; open control.html?room=SAME to control
+   host               your TikTok username: you can type !start !pause !reset
+                      !end !timer 5:00 in your own LIVE chat
    preview=1          dark background for testing in a normal browser
    demo=1             fake random votes
    timer              round length: seconds (timer=90) or m:ss (timer=2:30).
@@ -43,11 +48,15 @@
     leftPos: P.get("leftPos") || "",
     rightPos: P.get("rightPos") || "",
     ws: P.get("ws") || "ws://localhost:21213/",
-    giftA: (P.get("giftA") || "").toLowerCase(),
-    giftB: (P.get("giftB") || "").toLowerCase(),
+    // comma-separated gift names, e.g. giftA=Rose,Finger Heart
+    giftA: (P.get("giftA") || "").split(",").map((g) => g.trim()).filter(Boolean),
+    giftB: (P.get("giftB") || "").split(",").map((g) => g.trim()).filter(Boolean),
     giftMult: parseFloat(P.get("giftMult") || "1"),
     likes: parseFloat(P.get("likes") || "0"),
     cooldown: parseInt(P.get("cooldown") || "2000", 10),
+    room: P.get("room") || "",                       // remote control room (control.html)
+    ctrl: (P.get("ctrl") || "https://ntfy.sh").replace(/\/$/, ""),
+    host: (P.get("host") || "").replace(/^@/, "").toLowerCase(), // your TikTok username for !commands
   };
 
   const $ = (id) => document.getElementById(id);
@@ -81,6 +90,11 @@
   /* ---------- Init UI ---------- */
   $("question").textContent = cfg.question;
   if (cfg.hint) $("hint").textContent = cfg.hint;
+  // show each side's gift on its card
+  if (cfg.giftA.length) $("giftTagA").textContent = "🎁 " + cfg.giftA.join(" / ");
+  if (cfg.giftB.length) $("giftTagB").textContent = "🎁 " + cfg.giftB.join(" / ");
+  $("giftTagA").classList.toggle("hidden", !cfg.giftA.length);
+  $("giftTagB").classList.toggle("hidden", !cfg.giftB.length);
   if (cfg.leftPos) $("imgA").style.objectPosition = cfg.leftPos;
   if (cfg.rightPos) $("imgB").style.objectPosition = cfg.rightPos;
   $("nameA").textContent = cfg.left;
@@ -241,6 +255,10 @@
 
     if (type === "chat" || type === "comment") {
       const text = String(d.comment || d.text || "").trim().toLowerCase();
+      if (cfg.host && text.startsWith("!") && String(d.uniqueId || d.user?.uniqueId || "").toLowerCase() === cfg.host) {
+        command(text.slice(1));
+        return;
+      }
       let side = null;
       if (/^(1|a|team ?1)\b/.test(text) || text === cfg.left.toLowerCase()) side = "a";
       else if (/^(2|b|team ?2)\b/.test(text) || text === cfg.right.toLowerCase()) side = "b";
@@ -257,8 +275,8 @@
       if (d.giftType === 1 && d.repeatEnd === false) return;
       const name = String(d.giftName || d.extendedGiftInfo?.name || "").toLowerCase();
       let side = viewerSide.get(id) || null;
-      if (cfg.giftA && name === cfg.giftA) side = "a";
-      if (cfg.giftB && name === cfg.giftB) side = "b";
+      if (cfg.giftA.some((g) => g.toLowerCase() === name)) side = "a";
+      if (cfg.giftB.some((g) => g.toLowerCase() === name)) side = "b";
       if (!side) return; // viewer hasn't picked a side yet
       const diamonds = (d.diamondCount || 1) * (d.repeatCount || 1);
       const votes = Math.max(1, Math.round(diamonds * cfg.giftMult));
@@ -313,12 +331,53 @@
     else if (e.code === "BracketRight") adjust(e.shiftKey ? 60 : 15);
   });
 
+  /* ---------- Remote commands (control panel + host chat) ----------
+     start [m:ss] | pause | resume | toggle | reset | end
+     timer m:ss (set length without starting) | adjust ±sec
+     add a|b n | sub a|b n | demo                                     */
+  function command(text) {
+    const [c, x, y] = String(text).trim().toLowerCase().split(/\s+/);
+    const side = x === "b" || x === "2" ? "b" : "a";
+    switch (c) {
+      case "start":  startTimer(x ? parseTime(x) : (timer.duration > 0 ? timer.duration : 60)); break;
+      case "pause":  pause(); break;
+      case "resume": resume(); break;
+      case "toggle": timer.running ? pause() : resume(); break;
+      case "reset":  reset(); break;
+      case "end":    if (timer.running || timer.duration > 0) finishRound(); break;
+      case "timer":
+        timer.duration = Math.max(0, parseTime(x || "0"));
+        if (!timer.running) { timer.remaining = timer.duration; timer.ended = false; $("winner").classList.add("hidden"); }
+        drawTimer(); break;
+      case "adjust": adjust(parseInt(x, 10) || 0); break;
+      case "add":    add(side, Math.max(1, parseInt(y, 10) || 1)); break;
+      case "sub":    if (!timer.ended) { state[side] = Math.max(0, state[side] - Math.max(1, parseInt(y, 10) || 1)); render(); } break;
+      case "demo":   toggleDemo(); break;
+    }
+  }
+
+  // Control panel channel: control.html publishes to ntfy.sh/<topic>, we listen via SSE
+  function listenControl() {
+    if (!cfg.room) return;
+    const seen = new Set();
+    const es = new EventSource(`${cfg.ctrl}/tvo-${encodeURIComponent(cfg.room)}/sse`);
+    es.onmessage = (e) => {
+      try {
+        const m = JSON.parse(e.data);
+        if (m.event && m.event !== "message") return;
+        if (m.id) { if (seen.has(m.id)) return; seen.add(m.id); }
+        if (m.message) command(m.message);
+      } catch (_) { /* ignore */ }
+    };
+  }
+
   // Public hooks for other scripts / tools
-  window.Vote = { add, reset, handle, state, timer: { start: startTimer, pause, resume, adjust, state: timer } };
+  window.Vote = { add, reset, handle, state, command, timer: { start: startTimer, pause, resume, adjust, state: timer } };
 
   render();
   drawTimer();
   if (timer.duration > 0 && P.get("autostart") !== "0") startTimer();
   connect();
+  listenControl();
   if (P.get("demo") === "1") toggleDemo();
 })();

@@ -95,11 +95,11 @@ body.preview {
 .card-b .score { color: var(--purple-glow); text-shadow: 0 0 30px var(--purple); }
 
 /* ---------- VS badge ---------- */
-.vs-wrap { height: 0; position: relative; z-index: 5; display: flex; align-items: center; }
+.vs-wrap { height: 110px; margin: -40px 0; position: relative; z-index: 5; display: flex; align-items: center; }
 .vs {
-  width: 220px; height: 220px; border-radius: 50%;
+  width: 180px; height: 180px; border-radius: 50%;
   display: grid; place-items: center;
-  font-size: 100px; font-weight: 900; font-style: italic;
+  font-size: 84px; font-weight: 900; font-style: italic;
   background: linear-gradient(135deg, var(--blue), var(--purple));
   border: 8px solid #fff;
   box-shadow: 0 0 60px rgba(138,61,255,.9), 0 0 120px rgba(47,139,255,.5);
@@ -178,3 +178,6 @@ body.preview {
 .title h1, .title .hint, .info h2, .winner-name, .feed .item { unicode-bidi: plaintext; }
 .card-a .info h2 { text-align: left; }
 .card-b .info h2 { text-align: right; }
+
+/* gift chip next to COMMENT tag */
+.tag.gift { background: rgba(255,255,255,.14) !important; border: 2px solid rgba(255,255,255,.35); margin-top: 14px; font-size: 32px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

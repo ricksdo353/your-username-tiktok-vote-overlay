@@ -23,6 +23,7 @@ Viewers comment **1** or **2** to vote, gifts give bonus votes, and a timer anno
 - [🇮🇱 נתניהו נגד איזנקוט](#-ready-made-נתניהו-נגד-איזנקוט)
 
 **Using it**
+- [🎮 Control panel](#-control-panel)
 - [✅ Every-stream checklist](#-every-stream-checklist)
 
 **Reference**
@@ -55,7 +56,8 @@ You will choose **one** helper program in Step 5:
 
 - Comment **`1`** → +1 vote for the **left (blue)** character
 - Comment **`2`** → +1 vote for the **right (purple)** character
-- Send a **gift** → +1 vote per diamond, for the side they commented
+- Send a **gift** → +1 point per diamond (coin), for the side they commented
+- Or set a **gift per side** (e.g. 🌹 Rose = left, TikTok = right): that gift always counts for that side, even without a comment
 - Each viewer can vote once every 2 seconds (stops spam)
 
 ### What you need
@@ -68,11 +70,18 @@ You will choose **one** helper program in Step 5:
 
 ## 🇮🇱 Ready-made: נתניהו נגד איזנקוט
 
-Paste this link into your streaming app (needs GitHub Pages turned on, Step 1 Way A).
-10-minute rounds, Hebrew title and text, photos in the `images/` folder:
+**Overlay link** (paste into TikTok LIVE Studio → Sources → Link, 1080×1920).
+10-minute rounds started from the control panel, Hebrew text, 🌹 Rose = Netanyahu,
+TikTok gift = Eisenkot, other gifts count for the side the viewer commented:
 
 ```
-https://ricksdo353.github.io/your-username-tiktok-vote-overlay/?left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98&leftImg=images/netanyahu.jpg&rightImg=images/eisenkot.jpg&q=%D7%9E%D7%99%20%D7%99%D7%A0%D7%A6%D7%97%3F&hint=%D7%9B%D7%AA%D7%91%D7%95%201%20%D7%90%D7%95%202%20%C2%B7%20%D7%9E%D7%AA%D7%A0%D7%95%D7%AA%20%3D%20%D7%A7%D7%95%D7%9C%D7%95%D7%AA%20%D7%91%D7%95%D7%A0%D7%95%D7%A1&timer=10%3A00
+https://ricksdo353.github.io/your-username-tiktok-vote-overlay/?left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98&leftImg=images/netanyahu.jpg&rightImg=images/eisenkot.jpg&q=%D7%9E%D7%99%20%D7%99%D7%A0%D7%A6%D7%97%3F&hint=%D7%9B%D7%AA%D7%91%D7%95%201%20%D7%90%D7%95%202%20%C2%B7%20%D7%9E%D7%AA%D7%A0%D7%95%D7%AA%20%3D%20%D7%A0%D7%A7%D7%95%D7%93%D7%95%D7%AA&timer=10%3A00&autostart=0&giftA=Rose&giftB=TikTok&room=ppxt6f39
+```
+
+**Control panel link** (open on your phone or in a browser to run the rounds):
+
+```
+https://ricksdo353.github.io/your-username-tiktok-vote-overlay/control.html?room=ppxt6f39&left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98
 ```
 
 Photo credits:
@@ -255,19 +264,58 @@ That's it, you don't need to change your link. The overlay finds TikFinity on it
 
 ---
 
+# 🎮 Control panel
+
+`control.html` is a remote control for the overlay. Open it on your **phone** or in any
+browser while you're live, and the overlay in TikTok LIVE Studio follows it within a second.
+
+**What it can do:** start / pause / end the round, set the round length (1, 3, 5, 10, 15
+minutes or any time you type), add or remove time, add or remove votes by hand, reset,
+and turn demo mode on and off.
+
+### Set it up (once)
+
+1. Open the control panel:
+   `https://ricksdo353.github.io/your-username-tiktok-vote-overlay/control.html`
+2. It creates a private **room name** for you (e.g. `k7m2xq9p`).
+3. Paste your overlay link into **"הדבק כאן את קישור ה-overlay שלך"**.
+4. Click **"העתק קישור overlay"** and use **that** link in TikTok LIVE Studio
+   (it's your link with `&room=…` added).
+5. Click **"העתק קישור ללוח הזה"** and open it on your phone, or bookmark it.
+
+✅ **Check:** press **+1** in the panel; the overlay score goes up.
+
+> The overlay and the panel only need the **same room name**. Anyone who knows the
+> room name can control your overlay, so keep it private.
+> The panel sends commands through the free public service **ntfy.sh**; no account needed.
+
+### Control from your LIVE chat (optional)
+
+Add `&host=your_tiktok_username` to the overlay link. Then **only you** can type these in
+your own LIVE chat:
+
+| Type in chat | Does |
+|---|---|
+| `!start` | Start the round |
+| `!pause` / `!resume` | Pause / continue |
+| `!end` | End now and show the winner |
+| `!reset` | Reset votes and timer |
+| `!timer 5:00` | Set the round length |
+
+---
+
 # ✅ Every-stream checklist
 
 1. ☐ Go LIVE on TikTok.
 2. ☐ Start your helper: open **TikFinity**, *or* run `node server.js your_username`.
 3. ☐ Check the overlay corner says **● connected**.
 4. ☐ Tell viewers: *"Comment **1** for Goku, **2** for Naruto, gifts are bonus votes!"*
-5. ☐ The timer starts by itself. At **0:00** voting locks and the winner is shown 🏆
-6. ☐ Next round: press **`R`** (reset), then **`T`** (start timer).
+5. ☐ Open the **control panel** and press **▶ התחל סבב** (or the timer starts by itself
+   if your link has no `autostart=0`). At **0:00** voting locks and the winner is shown 🏆
+6. ☐ Next round: **↺ איפוס** then **▶ התחל סבב** in the control panel.
 
-**How to press keys during a stream:**
-- **OBS:** right-click the overlay source → **Interact** → press keys in that window.
-- **TikTok LIVE Studio:** if there's no "interact" option, refresh the source to start a
-  new round (the timer restarts automatically).
+No control panel? Use the [keyboard](#keyboard-controls) (OBS: right-click the source →
+**Interact**) or [chat commands](#control-from-your-live-chat-optional).
 
 ---
 
@@ -300,8 +348,8 @@ Add any of these to your link with `&`.
 
 | Setting | Example | What it does |
 |---|---|---|
-| `giftA` | `giftA=Rose` | This gift always votes for the left side |
-| `giftB` | `giftB=TikTok` | This gift always votes for the right side |
+| `giftA` | `giftA=Rose` | Gift(s) that always give points to the left side. Several: `giftA=Rose,Finger%20Heart` |
+| `giftB` | `giftB=TikTok` | Gift(s) that always give points to the right side |
 | `giftMult` | `giftMult=2` | Votes per gift diamond. Default: *1* |
 | `likes` | `likes=0.1` | Votes per like (`0.1` = 1 vote per 10 likes). Default: *off* |
 | `cooldown` | `cooldown=5000` | Wait time between a viewer's comment votes, in milliseconds. Default: *2000* (2 sec) |
@@ -311,6 +359,8 @@ Add any of these to your link with `&`.
 | Setting | Example | What it does |
 |---|---|---|
 | `ws` | `ws=ws://localhost:8080` | Helper address. Default is TikFinity's. Use this one for server.js |
+| `room` | `room=k7m2xq9p` | Control-panel room name (same as in `control.html`) |
+| `host` | `host=myname` | Your TikTok username, enables `!start` etc. in your chat |
 | `preview` | `preview=1` | Dark background for testing |
 | `demo` | `demo=1` | Fake votes for testing |
 
@@ -367,6 +417,7 @@ On GitHub Pages, changes can take ~1 minute to appear.
 | File | What it is |
 |---|---|
 | `index.html` | The overlay page |
+| `control.html` | Remote control panel (phone / browser) |
 | `style.css` | Colors, layout, animations |
 | `script.js` | Voting, timer, TikTok connection |
 | `server.js` | Optional helper (Option B) |
