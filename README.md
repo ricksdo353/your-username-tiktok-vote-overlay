@@ -342,8 +342,8 @@ Add any of these to your link with `&`.
 | `right` | `right=Naruto` | Right (purple) name. Default: *Player Two* |
 | `leftImg` | `leftImg=left.png` | Left picture (file name or `https://` link) |
 | `rightImg` | `rightImg=right.png` | Right picture |
-| `q` | `q=BEST%20HERO%3F` | Title text. Default: *WHO WINS?* |
-| `hint` | `hint=Type%201%20or%202` | Text under the title |
+| `q` | `q=BEST%20HERO%3F` | Title text. Default: *מי ינצח?* |
+| `hint` | `hint=Type%201%20or%202` | Text under the title. Default: *כתבו 1 או 2 בלייב!* |
 | `leftPos` / `rightPos` | `leftPos=center%2010%25` | Which part of the photo to show (moves the face into the circle). Default: *center 20%* |
 
 **Timer**
@@ -363,6 +363,21 @@ Add any of these to your link with `&`.
 | `giftMult` | `giftMult=2` | Votes per gift diamond. Default: *1* |
 | `likes` | `likes=0.1` | Votes per like (`0.1` = 1 vote per 10 likes). Default: *off* |
 | `cooldown` | `cooldown=5000` | Wait time between a viewer's comment votes, in milliseconds. Default: *2000* (2 sec) |
+
+**Look & effects**
+
+| Setting | Example | What it does |
+|---|---|---|
+| `bg` | `bg=panel` | `full` (default): dark animated background like the promo video. `panel`: a dark card over a transparent page. `none`: fully transparent, to sit over a camera |
+| `bigGift` | `bigGift=500` | Gifts worth this many coins or more get a full-screen takeover. Default: *100* |
+| `takeover` | `takeover=0` | Turn the full-screen gift takeovers off |
+| `countdown` | `countdown=0` | Turn the big 3-2-1 at the end of a round off |
+
+What happens on screen (the same as the promo video):
+- **Comment 1/2**: a bubble flies up from the chat strip, the face punches, the bar flashes.
+- **Gift**: the gift flies into the bar, a pill shows "+N for <side>", and it appears in the chat strip.
+- **Gift ≥ `bigGift`**: a full-screen takeover in that side's colour with the gift, "+N" and the name.
+- **Last 3 seconds of a round**: a giant 3-2-1, then the winner (or "צמוד! תיקו" on a tie).
 
 **Connection & testing**
 
@@ -436,6 +451,7 @@ On GitHub Pages, changes can take ~1 minute to appear.
 | `index.html` | The overlay page |
 | `control.html` | Remote control panel (phone / browser) |
 | `style.css` | Colors, layout, animations |
+| `fonts/` | Heebo Hebrew font (SIL Open Font License) |
 | `script.js` | Voting, timer, TikTok connection |
 | `images/gifts/` | Gift pictures: Rose, TikTok, Hand Heart, Confetti |
 | `server.js` | Optional helper (Option B) |

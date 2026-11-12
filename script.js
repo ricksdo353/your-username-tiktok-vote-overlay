@@ -26,7 +26,11 @@
    room               remote-control room name; open control.html?room=SAME to control
    host               your TikTok username: you can type !start !pause !reset
                       !end !timer 5:00 in your own LIVE chat
-   preview=1          dark background for testing in a normal browser
+   bg                 full (default, like the promo video) | panel (dark card) | none (transparent, over a camera)
+   bigGift            gifts worth this many coins or more get a full-screen takeover (default 100)
+   takeover=0         turn the full-screen gift takeovers off
+   countdown=0        turn the big 3-2-1 at the end of a round off
+   preview=1          black page background for testing in a normal browser
    demo=1             fake random votes
    timer              round length: seconds (timer=90) or m:ss (timer=2:30).
                       Omit for no timer. When it hits 0, voting locks and
@@ -46,7 +50,7 @@
     right: P.get("right") || "Player Two",
     leftImg: P.get("leftImg") || "",
     rightImg: P.get("rightImg") || "",
-    question: P.get("q") || "WHO WINS?",
+    question: P.get("q") || "",                      // default: "מי ינצח?"
     hint: P.get("hint") || "",
     leftPos: P.get("leftPos") || "",
     rightPos: P.get("rightPos") || "",
@@ -60,6 +64,10 @@
     room: P.get("room") || "",                       // remote control room (control.html)
     ctrl: (P.get("ctrl") || "https://ntfy.sh").replace(/\/$/, ""),
     host: (P.get("host") || "").replace(/^@/, "").toLowerCase(), // your TikTok username for !commands
+    bg: P.get("bg") || "full",                       // full | panel | none (transparent, for a camera stream)
+    bigGift: parseInt(P.get("bigGift") || "100", 10), // gifts worth this many coins or more get a full-screen takeover
+    takeover: P.get("takeover") !== "0",
+    countdown: P.get("countdown") !== "0",           // big 3-2-1 at the end of a round
   };
 
   const $ = (id) => document.getElementById(id);
@@ -76,6 +84,7 @@
   addEventListener("resize", fit);
   fit();
   if (P.get("preview") === "1") document.body.classList.add("preview");
+  document.body.classList.add("bg-" + (["full", "panel", "none"].includes(cfg.bg) ? cfg.bg : "full"));
 
   /* ---------- Placeholder avatars (no internet needed) ---------- */
   function placeholder(letter, c1, c2) {
@@ -91,7 +100,7 @@
   }
 
   /* ---------- Init UI ---------- */
-  $("question").textContent = cfg.question;
+  if (cfg.question) $("question").textContent = cfg.question;
   if (cfg.hint) $("hint").textContent = cfg.hint;
   // show each side's gift on its card
   if (cfg.leftPos) $("imgA").style.objectPosition = cfg.leftPos;
@@ -149,20 +158,100 @@
     $("scoreA").textContent = fmt(state.a);
     $("scoreB").textContent = fmt(state.b);
     // keep a sliver of each colour visible so labels never vanish
-    $("barA").style.width = Math.min(Math.max(pa, 15), 85) + "%";
-    $("barB").style.width = Math.min(Math.max(pb, 15), 85) + "%";
+    $("barA").style.width = Math.min(Math.max(pa, 12), 88) + "%";
     $("pctA").textContent = pa + "%";
     $("pctB").textContent = pb + "%";
     $("cardA").classList.toggle("leading", state.a > state.b);
     $("cardB").classList.toggle("leading", state.b > state.a);
   }
 
-  function bump(side) {
-    const el = $(side === "a" ? "cardA" : "cardB");
-    el.classList.remove("bump");
-    void el.offsetWidth;
-    el.classList.add("bump");
-    setTimeout(() => el.classList.remove("bump"), 150);
+  /* ---------- Effects (Web Animations; all optional eye candy) ---------- */
+  const anim = (el, frames, opts) => { try { return el.animate(frames, opts); } catch (_) { return null; } };
+  const sideName = (side) => (side === "a" ? cfg.left : cfg.right);
+
+  function bump(side, strong) {
+    anim($(side === "a" ? "cardA" : "cardB"),
+      [{ transform: "scale(1)" }, { transform: `scale(${strong ? 1.12 : 1.06})` }, { transform: "scale(1)" }],
+      { duration: strong ? 380 : 220, easing: "ease-out" });
+    anim($(side === "a" ? "barFlashA" : "barFlashB"), [{ opacity: 0.75 }, { opacity: 0 }], { duration: 380, easing: "ease-out" });
+  }
+
+  function shake(el, amp = 14) {
+    anim(el, [{ transform: "translate(0,0)" }, { transform: `translate(${-amp}px,${amp / 2}px)` }, { transform: `translate(${amp - 2}px,${-amp / 2}px)` },
+      { transform: `translate(${-amp / 2}px,4px)` }, { transform: "translate(0,0)" }], { duration: 220 });
+  }
+
+  // a gift slides in from its side of the screen into the bar
+  function flyGift(side, icon) {
+    if (!icon) return;
+    const img = document.createElement("img");
+    img.className = "fly-gift " + side; img.alt = ""; img.src = icon;
+    img.style.left = (side === "a" ? -260 : 1100) + "px"; img.style.top = "995px";
+    $("flyLayer").appendChild(img);
+    const dx = side === "a" ? 680 : -660;
+    const a = anim(img, [{ transform: "translate(0,0) scale(1.2)", opacity: 1 }, { transform: `translate(${dx}px,0) scale(.45)`, opacity: 1 },
+      { transform: `translate(${dx}px,0) scale(.2)`, opacity: 0 }], { duration: 480, easing: "ease-in" });
+    setTimeout(() => img.remove(), 520);
+    if (!a) img.remove();
+  }
+
+  // a comment bubble flies from the chat strip into the face
+  let lastFly = 0;
+  function flyVote(side) {
+    const now = Date.now();
+    if (now - lastFly < 220) return; // keep busy chats readable
+    lastFly = now;
+    const b = document.createElement("div");
+    b.className = "fly-vote " + side; b.textContent = side === "a" ? "1" : "2";
+    b.style.left = (side === "a" ? 300 : 640) + "px"; b.style.top = "1400px";
+    $("flyLayer").appendChild(b);
+    anim(b, [{ transform: "translate(0,0) scale(.6)", opacity: 0 }, { transform: "translate(0,-40px) scale(1)", opacity: 1, offset: 0.2 },
+      { transform: `translate(${side === "a" ? -70 : 70}px,-560px) scale(.6)`, opacity: 1, offset: 0.9 }, { transform: `translate(${side === "a" ? -70 : 70}px,-580px) scale(.3)`, opacity: 0 }],
+      { duration: 520, easing: "ease-in" });
+    setTimeout(() => b.remove(), 560);
+  }
+
+  // full-screen moment for big gifts
+  let tkTimer = null;
+  function takeover(side, icon, votes) {
+    if (!cfg.takeover) return;
+    const t = $("takeover");
+    t.className = "abs " + side;
+    $("tkVal").textContent = "+" + votes.toLocaleString("en-US");
+    $("tkImg").src = icon || ""; $("tkImg").style.visibility = icon ? "visible" : "hidden";
+    $("tkName").textContent = "ל" + sideName(side);
+    anim(t, [{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, offset: 0.85 }, { opacity: 0 }], { duration: 900, easing: "linear" });
+    anim($("tkImg"), [{ transform: "scale(.3) rotate(-12deg)" }, { transform: "scale(1.12) rotate(0)", offset: 0.25 }, { transform: "scale(1)", offset: 0.7 }, { transform: "translateY(330px) scale(.2)" }], { duration: 900, easing: "ease-out" });
+    anim($("tkVal"), [{ transform: "scale(2)" }, { transform: "scale(1)", offset: 0.2 }, { transform: "scale(1)" }], { duration: 900 });
+    clearTimeout(tkTimer);
+    tkTimer = setTimeout(() => { bump(side, true); shake($("dash"), 18); }, 650);
+  }
+
+  // gift / event pill under the scores
+  let toastTimer = null;
+  function toast(html, side, icon) {
+    const t = $("toast");
+    t.className = "abs he show " + side;
+    t.replaceChildren();
+    if (icon) { const img = document.createElement("img"); img.src = icon; img.alt = ""; img.onerror = () => img.remove(); t.appendChild(img); }
+    const span = document.createElement("span"); span.innerHTML = html; t.appendChild(span);
+    document.body.classList.add("toasting");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.classList.remove("show"); document.body.classList.remove("toasting"); }, 1600);
+  }
+  const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  // live chat strip: newest message enters on the right
+  function chatChip(user, side, icon) {
+    const row = $("tickerRow");
+    const c = document.createElement("div");
+    c.className = "chip";
+    const who = document.createElement("span"); who.className = "who"; who.textContent = user;
+    c.appendChild(who);
+    if (icon) { const img = document.createElement("img"); img.src = icon; img.alt = ""; img.onerror = () => img.remove(); c.appendChild(img); }
+    else { const v = document.createElement("span"); v.className = "v " + side; v.textContent = side === "a" ? "1" : "2"; c.appendChild(v); }
+    row.prepend(c);
+    while (row.children.length > 8) row.lastChild.remove();
   }
 
   function feed(text, side, icon) {
@@ -198,14 +287,26 @@
   function drawTimer() {
     const el = $("timer");
     el.classList.toggle("hidden", timer.duration <= 0 && !timer.running);
+    document.body.classList.toggle("no-timer", timer.duration <= 0 && !timer.running);
     $("timerText").textContent = timer.ended ? "0:00" : mmss(Math.ceil(timer.remaining));
     el.classList.toggle("paused", !timer.running && !timer.ended);
     el.classList.toggle("urgent", timer.running && timer.remaining <= 10);
     el.classList.toggle("done", timer.ended);
   }
 
+  let lastCount = 0;
   function tick() {
     timer.remaining = Math.max(0, (timer.endAt - Date.now()) / 1000);
+    const c = Math.ceil(timer.remaining);
+    if (cfg.countdown && timer.running && c >= 1 && c <= 3 && c !== lastCount) {
+      lastCount = c;
+      const cd = $("countdown");
+      cd.textContent = String(c);
+      anim(cd, [{ transform: "scale(2.4)", opacity: 0 }, { transform: "scale(1)", opacity: 1, offset: 0.2 }, { transform: "scale(.9)", opacity: 1, offset: 0.8 }, { transform: "scale(.6)", opacity: 0 }], { duration: 900, easing: "ease-out" });
+      anim($("dim"), [{ opacity: 0 }, { opacity: 0.65, offset: 0.15 }, { opacity: 0.6, offset: 0.8 }, { opacity: 0 }], { duration: 900 });
+      shake($("stage"), 10);
+    }
+    if (c > 3) lastCount = 0;
     if (timer.remaining <= 0) finishRound();
     drawTimer();
   }
@@ -254,7 +355,7 @@
     const w = $("winner");
     w.classList.remove("hidden", "a", "b");
     if (state.a === state.b) {
-      $("winnerName").textContent = "IT'S A TIE!";
+      $("winnerName").textContent = "צמוד! תיקו";
     } else {
       const side = state.a > state.b ? "a" : "b";
       w.classList.add(side);
@@ -268,8 +369,8 @@
     if (timer.ended) return; // round over: votes locked
     state[side] += n;
     render();
-    bump(side);
-    if (label) feed(label, side, icon);
+    bump(side, n >= 10);
+    if (label) toast(label, side, icon);
   }
 
   function reset() {
@@ -330,6 +431,8 @@
       if (now - (lastVote.get(id) || 0) < cfg.cooldown) return;
       lastVote.set(id, now);
       add(side, 1);
+      chatChip(user, side);
+      flyVote(side);
       debugLog(`💬 ${user} +1 → ${side === "a" ? cfg.left : cfg.right}`, side);
     }
 
@@ -354,7 +457,10 @@
       const diamonds = each * count;
       const votes = Math.max(1, Math.round(diamonds * cfg.giftMult));
       const icon = giftIcon(name);
-      add(side, votes, `${icon ? "" : "🎁 "}${user} +${votes} → ${side === "a" ? cfg.left : cfg.right}`, icon);
+      add(side, votes, `${icon ? "" : "🎁 "}${esc(user)} <b class="ltr">+${votes.toLocaleString("en-US")}</b> ל${esc(sideName(side))}`, icon);
+      chatChip(user, side, icon);
+      flyGift(side, icon);
+      if (each >= cfg.bigGift || votes >= cfg.bigGift) takeover(side, icon, votes);
     }
 
     else if (type === "like" && cfg.likes > 0) {
@@ -389,8 +495,10 @@
     if (demoTimer) { clearInterval(demoTimer); demoTimer = null; return; }
     demoTimer = setInterval(() => {
       const side = Math.random() < 0.5 ? "a" : "b";
-      if (Math.random() < 0.08) handle({ event: "gift", data: { nickname: "fan" + ((Math.random() * 99) | 0), uniqueId: "demo" + side, giftName: "Rose", diamondCount: 5, repeatCount: 1 } });
-      else { viewerSide.set("demo" + side, side); add(side, 1); }
+      const r = Math.random();
+      if (r < 0.015) handle({ event: "gift", data: { nickname: "fan" + ((Math.random() * 99) | 0), uniqueId: "demo" + side, giftName: side === "a" ? "Hand Heart" : "Confetti", diamondCount: 100, repeatCount: 1 } });
+      else if (r < 0.08) handle({ event: "gift", data: { nickname: "fan" + ((Math.random() * 99) | 0), uniqueId: "demo" + side, giftName: side === "a" ? "Rose" : "TikTok", diamondCount: 1, repeatCount: 1 } });
+      else { viewerSide.set("demo" + side, side); add(side, 1); chatChip("demo", side); flyVote(side); }
     }, 250);
   }
 

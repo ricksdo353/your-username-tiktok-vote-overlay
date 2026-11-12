@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="he">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -8,51 +8,61 @@
 </head>
 <body>
   <div id="stage">
-    <header class="title">
-      <span class="live-dot"></span>
-      <h1 id="question">WHO WINS?</h1>
-      <p class="hint" id="hint">Comment <b>1</b> or <b>2</b> &middot; Gifts = bonus votes</p>
-      <div class="timer hidden" id="timer"><span class="clock">⏱</span> <span id="timerText">1:00</span></div>
-    </header>
+    <!-- background (bg=full, the default; bg=panel or bg=none for a camera stream) -->
+    <div id="bgfx" class="abs">
+      <div class="glow glow-a"></div><div class="glow glow-b"></div><div class="grid"></div><div class="vignette"></div>
+    </div>
+    <div id="panel" class="abs"></div>
 
-    <!-- Character A (blue) -->
-    <section class="card card-a" id="cardA">
-      <div class="avatar-ring"><img id="imgA" alt="Character A" /></div>
-      <div class="info">
-        <span class="tag">COMMENT 1</span>
-        <h2 id="nameA">Player One</h2>
-        <div class="score" id="scoreA">0</div>
-        <span class="tag gift hidden" id="giftTagA"></span>
+    <!-- header -->
+    <div id="live" class="abs pill live"><span id="liveDot" class="live-dot"></span>LIVE</div>
+    <h1 id="question" class="abs he center">מי <span class="grad">ינצח?</span></h1>
+    <p id="hint" class="abs he center">כתבו <span class="blue">1</span> או <span class="purple">2</span> <span class="grad">בלייב!</span></p>
+    <div id="timer" class="abs pill hidden"><div id="timerRed" class="abs"></div><span id="timerText">10:00</span></div>
+
+    <!-- face-off -->
+    <div id="dash" class="abs">
+      <div id="cardA" class="abs portrait ring-a"><img id="imgA" alt="" /></div>
+      <div id="cardB" class="abs portrait ring-b"><img id="imgB" alt="" /></div>
+      <div id="vs" class="abs vs">VS</div>
+      <div id="nameA" class="abs name he blue">Player One</div>
+      <div id="nameB" class="abs name he purple">Player Two</div>
+
+      <div id="bar" class="abs">
+        <div id="barA" class="abs"></div>
+        <div id="barFlashA" class="abs bar-flash"></div>
+        <div id="barFlashB" class="abs bar-flash"></div>
+        <span id="pctA" class="abs pct">50%</span>
+        <span id="pctB" class="abs pct">50%</span>
       </div>
-    </section>
 
-    <!-- VS badge -->
-    <div class="vs-wrap"><div class="vs" id="vs">VS</div></div>
-
-    <!-- Character B (purple) -->
-    <section class="card card-b" id="cardB">
-      <div class="avatar-ring"><img id="imgB" alt="Character B" /></div>
-      <div class="info">
-        <span class="tag">COMMENT 2</span>
-        <h2 id="nameB">Player Two</h2>
-        <div class="score" id="scoreB">0</div>
-        <span class="tag gift hidden" id="giftTagB"></span>
-      </div>
-    </section>
-
-    <!-- Percentage bar -->
-    <div class="bar">
-      <div class="bar-a" id="barA"><span id="pctA">50%</span></div>
-      <div class="bar-b" id="barB"><span id="pctB">50%</span></div>
+      <div id="scoreA" class="abs score">0</div>
+      <div id="scoreB" class="abs score">0</div>
     </div>
 
-    <div class="winner hidden" id="winner">
-      <div class="winner-label">TIME'S UP!</div>
-      <div class="winner-name" id="winnerName">WINNER</div>
-    </div>
+    <!-- gifts for each side / gift toast (same spot) -->
+    <div id="giftTagA" class="abs gift-tag hidden"></div>
+    <div id="giftTagB" class="abs gift-tag hidden"></div>
+    <div id="toast" class="abs he"></div>
 
-    <div class="feed" id="feed"></div>
-    <div class="status" id="status">offline</div>
+    <!-- live chat strip (below TikTok's safe area) -->
+    <div id="ticker" class="abs"><div id="tickerRow"></div></div>
+
+    <!-- effects -->
+    <div id="flyLayer" class="abs"></div>
+    <div id="takeover" class="abs">
+      <div id="tkVal" class="abs gold">+100</div>
+      <img id="tkImg" class="abs" alt="" />
+      <div id="tkName" class="abs he"></div>
+    </div>
+    <div id="dim" class="abs"></div>
+    <div id="countdown" class="abs">3</div>
+    <div id="winner" class="abs hidden">
+      <div class="winner-label he">נגמר הזמן!</div>
+      <div class="winner-name he" id="winnerName">WINNER</div>
+    </div>
+    <div id="feed" class="abs"></div>
+    <div id="status" class="abs">offline</div>
   </div>
 
   <script src="script.js"></script>
