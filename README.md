@@ -1,359 +1,347 @@
-# TikTok LIVE Vote Overlay
+# 🔵 TikTok LIVE Vote Overlay 🟣
 
-A vertical (1080×1920) **"Who wins?" voting overlay** for TikTok LIVE in blue and purple:
-two characters with pictures, live score counters, a VS badge, a percentage bar, gift
-pop-ups, and an optional countdown timer that announces the winner.
+A **"Who wins?" voting screen** for your TikTok LIVE.
+Viewers comment **1** or **2** to vote, gifts give bonus votes, and a timer announces the winner.
 
 ![Overlay preview](preview.png)
 ![Timer and winner screen](preview-timer.png)
 
 ---
 
-## Table of contents
+## 📖 Contents
 
-1. [How it works](#1-how-it-works)
-2. [What you need](#2-what-you-need)
-3. [Step 1 – Download the overlay](#step-1--download-the-overlay)
-4. [Step 2 – Add your character pictures](#step-2--add-your-character-pictures)
-5. [Step 3 – Build your overlay link](#step-3--build-your-overlay-link)
-6. [Step 4 – Test it in your browser](#step-4--test-it-in-your-browser)
-7. [Step 5 – Connect it to your TikTok LIVE](#step-5--connect-it-to-your-tiktok-live)
-   - [Option A: TikFinity (easiest)](#option-a-tikfinity-easiest)
-   - [Option B: The included relay server (free, uses Node.js)](#option-b-the-included-relay-server-free-uses-nodejs)
-8. [Step 6 – Put the overlay on your stream](#step-6--put-the-overlay-on-your-stream)
-   - [TikTok LIVE Studio](#tiktok-live-studio)
-   - [OBS Studio](#obs-studio)
-   - [Stream to Earn](#stream-to-earn)
-9. [Step 7 – Go live and run a round](#step-7--go-live-and-run-a-round)
-10. [Optional – Host it online with GitHub Pages](#optional--host-it-online-with-github-pages)
-11. [All settings](#all-settings)
-12. [Keyboard controls](#keyboard-controls)
-13. [Troubleshooting](#troubleshooting)
+**Setup (do once)**
+- [Before you start](#-before-you-start)
+- [Step 1: Get the overlay link](#step-1-get-the-overlay-link)
+- [Step 2: Add your character pictures](#step-2-add-your-character-pictures)
+- [Step 3: Customize your link](#step-3-customize-your-link)
+- [Step 4: Test it](#step-4-test-it)
+- [Step 5: Connect to TikTok](#step-5-connect-to-tiktok)
+- [Step 6: Add the overlay to your stream](#step-6-add-the-overlay-to-your-stream)
+
+**Using it**
+- [✅ Every-stream checklist](#-every-stream-checklist)
+
+**Reference**
+- [All settings](#all-settings)
+- [Keyboard controls](#keyboard-controls)
+- [Troubleshooting](#troubleshooting)
+- [Files in this project](#files-in-this-project)
 
 ---
 
-## 1. How it works
+## 💡 Before you start
+
+### How it works
+
+The overlay is a web page. It can't see your TikTok LIVE by itself, so a **helper program**
+on your computer reads your LIVE and sends the votes to it:
 
 ```
- Viewers comment "1" / "2" and send gifts
-                 │
-                 ▼
-         TikTok LIVE servers
-                 │
-                 ▼
-  A connector on YOUR PC  ─────────────►  the overlay (index.html)
-  (TikFinity  OR  server.js)   WebSocket    shown in TikTok LIVE Studio / OBS
+Viewers comment & send gifts  →  TikTok  →  Helper program on your PC  →  Overlay on your stream
 ```
 
-The overlay is just a web page. It can't read TikTok on its own, so a small program on
-your computer (**TikFinity** or the included **server.js**) connects to your LIVE and
-passes comments, gifts and likes to the overlay through a local WebSocket connection.
+You will choose **one** helper program in Step 5:
 
-**Voting rules (default):**
+| Helper | Good for | Needs |
+|---|---|---|
+| **TikFinity** ⭐ recommended | Beginners: just install and log in | The free TikFinity app |
+| **server.js** (included) | People OK with typing 2 commands | Free Node.js |
 
-| Viewer action | Effect |
-|---|---|
-| Comments `1`, `A`, `team 1` or the left character's name | +1 vote for the left (blue) side |
-| Comments `2`, `B`, `team 2` or the right character's name | +1 vote for the right (purple) side |
-| Sends a gift | +1 vote per diamond for the side they last commented |
-| Likes | Off by default (can be turned on) |
+### How viewers vote
 
-Each viewer can cast a comment vote once every 2 seconds, so spam doesn't take over.
+- Comment **`1`** → +1 vote for the **left (blue)** character
+- Comment **`2`** → +1 vote for the **right (purple)** character
+- Send a **gift** → +1 vote per diamond, for the side they commented
+- Each viewer can vote once every 2 seconds (stops spam)
 
----
+### What you need
 
-## 2. What you need
-
-- A Windows or Mac computer (the overlay runs on your PC, not your phone).
-- **TikTok LIVE Studio** or **OBS Studio** to stream, plus access to go LIVE on TikTok.
-- **One** of these connectors:
-  - **TikFinity** (easiest, no coding) – https://tikfinity.zerody.one
-  - **Node.js 18 or newer** (free) to run the included `server.js` – https://nodejs.org
-- Two pictures of your characters (PNG or JPG; square images look best).
+- ☐ A Windows or Mac computer
+- ☐ **TikTok LIVE Studio** or **OBS Studio** for streaming
+- ☐ Two character pictures (square PNG or JPG looks best)
 
 ---
 
-## Step 1 – Download the overlay
+# Setup (do once)
 
-**Easiest way (no Git needed):**
+## Step 1: Get the overlay link
 
-1. Open this repository on GitHub.
-2. Click the green **Code** button → **Download ZIP**.
-3. Unzip it somewhere easy to find, e.g. `C:\overlay\` (Windows) or `~/overlay/` (Mac).
+Your streaming app needs a **link** to the overlay. Pick **one** way:
 
-**Or with Git:**
+### ⭐ Way A: Online link (recommended, works everywhere)
 
-```bash
-git clone https://github.com/ricksdo353/your-username-tiktok-vote-overlay.git
-```
+1. On this GitHub page, click **⚙️ Settings** (top menu).
+2. In the left menu, click **Pages**.
+3. Under **Branch**, choose **`main`** and **`/ (root)`**, then click **Save**.
+4. Wait about 1 minute and refresh the page.
 
-You should now have a folder containing `index.html`, `style.css`, `script.js`,
-`server.js`, and the other files.
-
----
-
-## Step 2 – Add your character pictures
-
-1. Copy your two images **into the same folder as `index.html`**.
-2. Give them short names without spaces, e.g. `left.png` and `right.png`.
-
-> If you skip this step, the overlay shows blue and purple placeholder avatars.
-> You can also use an online image address (a link that starts with `https://`).
-
----
-
-## Step 3 – Build your overlay link
-
-You choose the names, pictures and timer by adding settings to the end of the overlay's
-address. Start from the full path to `index.html` on your PC:
-
-- **Windows:** `file:///C:/overlay/index.html`
-- **Mac:** `file:///Users/YOURNAME/overlay/index.html`
-
-> Tip: drag `index.html` into Chrome; the address bar then shows the exact path.
-
-Then add `?` and your settings, separated by `&`. Example:
+✅ **Check:** the Pages screen shows *"Your site is live at …"*. Your link is:
 
 ```
-file:///C:/overlay/index.html?left=Goku&right=Naruto&leftImg=left.png&rightImg=right.png&timer=2:00
+https://ricksdo353.github.io/your-username-tiktok-vote-overlay/
 ```
 
-| Part | Meaning |
-|---|---|
-| `left=Goku` | Name of the left (blue) character |
-| `right=Naruto` | Name of the right (purple) character |
-| `leftImg=left.png` | Left picture |
-| `rightImg=right.png` | Right picture |
-| `timer=2:00` | 2-minute round (leave it out for no timer) |
+### Way B: Files on your computer
 
-Names with spaces use `%20`, e.g. `left=Blue%20Knight`.
-See [All settings](#all-settings) for everything else you can change.
+1. On this GitHub page, click the green **`<> Code`** button → **Download ZIP**.
+2. Unzip it to an easy place, e.g. `C:\overlay\` (Windows) or your Documents folder (Mac).
+3. Drag **`index.html`** into Google Chrome and copy the address from the address bar.
 
----
+✅ **Check:** your link looks like `file:///C:/overlay/index.html`
 
-## Step 4 – Test it in your browser
-
-Before going live, check that everything looks right:
-
-1. Open your link in **Chrome** and add `&preview=1&demo=1` to the end:
-   ```
-   file:///C:/overlay/index.html?left=Goku&right=Naruto&leftImg=left.png&rightImg=right.png&preview=1&demo=1
-   ```
-2. You should see fake votes coming in and the bar moving.
-3. Click the page, then press `D` to stop the demo, `R` to reset, `1`/`2` to add votes.
-
-`preview=1` only adds a dark background for testing. Remove it, and `demo=1`, for the
-real stream, because the overlay is meant to be transparent.
-
-The small label in the bottom-right corner shows the connection:
-**● connected** (green) means it is receiving TikTok events; **reconnecting…** means no
-connector is running yet. That's expected until you finish Step 5.
+> ⚠️ Some streaming apps don't accept `file:///` links. If yours doesn't, use Way A.
 
 ---
 
-## Step 5 – Connect it to your TikTok LIVE
+## Step 2: Add your character pictures
 
-Pick **one** option.
+1. Rename your pictures to **`left.png`** and **`right.png`** (or `.jpg`).
+2. Put them **next to `index.html`**:
+   - **Way A (online):** on this GitHub page, click **Add file → Upload files**, drag
+     both pictures in, then click **Commit changes**.
+   - **Way B (computer):** copy them into the folder you unzipped.
 
-### Option A: TikFinity (easiest)
+> No pictures? Skip this step. The overlay shows blue and purple placeholders.
 
-TikFinity is a free desktop app that connects to your TikTok LIVE and shares the events
-on your PC. The overlay listens to TikFinity **automatically** (on `ws://localhost:21213/`),
-so you don't need to add anything to your link.
+---
 
-1. Download and install TikFinity from https://tikfinity.zerody.one and open it.
-2. Log in / enter **your TikTok username** and connect it to your LIVE.
-3. Start your TikTok LIVE (TikFinity only receives events while you're live).
-4. Open or reload the overlay. The corner label should turn **● connected**.
+## Step 3: Customize your link
 
-> If it stays on "reconnecting…", make sure the TikFinity desktop app is open (not just the
-> website) and look in its settings for the WebSocket / API option being enabled.
+You change names, pictures and the timer by **adding text to the end of your link**.
 
-### Option B: The included relay server (free, uses Node.js)
+**Here is a ready-to-use example.** Copy it and change the parts in **bold** below:
 
-`server.js` connects to your TikTok LIVE using the open-source
-`tiktok-live-connector` library and sends the events to the overlay.
+```
+https://ricksdo353.github.io/your-username-tiktok-vote-overlay/?left=Goku&right=Naruto&leftImg=left.png&rightImg=right.png&timer=2:00
+```
 
-1. Install **Node.js** (the "LTS" version) from https://nodejs.org.
-2. Open a terminal **in the overlay folder**:
-   - **Windows:** open the folder in File Explorer, click the address bar, type `cmd`, press Enter.
-   - **Mac:** right-click the folder in Finder → **New Terminal at Folder**.
-3. Install the dependencies (only needed once):
+| Change this… | …to set | Example |
+|---|---|---|
+| `left=Goku` | Left (blue) name | `left=Messi` |
+| `right=Naruto` | Right (purple) name | `right=Ronaldo` |
+| `leftImg=left.png` | Left picture file | `leftImg=messi.jpg` |
+| `rightImg=right.png` | Right picture file | `rightImg=cr7.jpg` |
+| `timer=2:00` | Round length | `timer=30` (30 seconds), `timer=5:00` (5 minutes) |
+
+**Rules:**
+- The first setting starts with **`?`**, every next one starts with **`&`**.
+- Spaces in names are written as **`%20`** → `left=Blue%20Knight`
+- Don't want a timer? Delete `&timer=2:00`.
+- Using Way B? Replace the start of the link with your `file:///…/index.html` link.
+
+👉 More options (gift rules, likes, title…) are in [All settings](#all-settings).
+
+---
+
+## Step 4: Test it
+
+1. Add **`&preview=1&demo=1`** to the end of your link and open it in Chrome.
+2. You should see votes appearing and the bar moving.
+3. Click on the page and try: **`D`** = stop demo, **`R`** = reset, **`1`** / **`2`** = add a vote.
+
+✅ **Check:** names, pictures and timer look the way you want.
+
+> 🔴 **Remove `&preview=1&demo=1` before streaming.** `preview` adds a dark background
+> (the real overlay is see-through), and `demo` adds fake votes.
+
+The small text in the bottom-right corner shows the connection status:
+- **reconnecting…** = no helper program running yet (normal for now)
+- **● connected** (green) = receiving votes from TikTok ✅
+
+---
+
+## Step 5: Connect to TikTok
+
+Choose **one** option.
+
+### ⭐ Option A: TikFinity (recommended)
+
+1. Download TikFinity from **https://tikfinity.zerody.one** and install the **desktop app**.
+2. Open it and enter / log in with **your TikTok username**.
+3. Start your TikTok LIVE.
+4. Refresh the overlay.
+
+✅ **Check:** the overlay's corner says **● connected**.
+
+That's it, you don't need to change your link. The overlay finds TikFinity on its own.
+
+> Still says *reconnecting…*? Make sure the TikFinity **desktop app** is open (not only
+> the website), and that its **WebSocket / API** option is turned on in its settings.
+
+### Option B: server.js (included helper)
+
+**First time only:**
+
+1. Install **Node.js** (choose **LTS**) from **https://nodejs.org**.
+2. Download this project as a ZIP (see Step 1, Way B) and unzip it.
+3. Open a terminal **inside that folder**:
+   - **Windows:** open the folder, click the address bar, type **`cmd`**, press **Enter**.
+   - **Mac:** right-click the folder → **New Terminal at Folder**.
+4. Type this and press Enter:
    ```bash
    npm install
    ```
-4. **Start your TikTok LIVE first**, then run the relay with your username (without the `@`):
+
+**Every stream:**
+
+1. Start your TikTok LIVE.
+2. In the terminal, type (use your username, without `@`):
    ```bash
    node server.js your_tiktok_username
    ```
-   You should see:
-   ```
-   Overlay WebSocket on ws://localhost:8080
-   Connected to @your_tiktok_username's LIVE (room 123456789)
-   ```
-5. Add `&ws=ws://localhost:8080` to your overlay link, e.g.
-   ```
-   file:///C:/overlay/index.html?left=Goku&right=Naruto&leftImg=left.png&rightImg=right.png&ws=ws://localhost:8080
-   ```
-6. The terminal will print `Overlay connected` and the overlay's label turns **● connected**.
+3. Add **`&ws=ws://localhost:8080`** to the end of your overlay link.
 
-Keep the terminal window open during your whole stream. If you go live before starting
-the relay, or the LIVE drops, the relay retries every 10 seconds on its own.
+✅ **Check:** the terminal shows `Connected to @your_tiktok_username's LIVE` and
+`Overlay connected`, and the overlay's corner says **● connected**.
+
+> Keep the terminal window open for the whole stream. If it can't connect, it tries again
+> every 10 seconds by itself.
 
 ---
 
-## Step 6 – Put the overlay on your stream
+## Step 6: Add the overlay to your stream
 
 ### TikTok LIVE Studio
 
-1. Open TikTok LIVE Studio and choose **vertical (portrait)** layout.
-2. Under **Sources**, click **+ / Add Source** and pick the web-page source
-   (it's called **Link** or **Browser** depending on your version).
-3. Paste your overlay link from Step 3 (with `&ws=...` if you use Option B).
-4. Set the size to **1080 × 1920**.
-5. Drag it above your camera source in the source list so it appears on top. Resize it if
-   you want it smaller.
-
-> Some versions of LIVE Studio don't accept `file:///` links. If yours doesn't, use the
-> [GitHub Pages](#optional--host-it-online-with-github-pages) address instead. It
-> still connects to TikFinity / server.js on your PC.
+1. Use the **vertical (portrait)** layout.
+2. Under **Sources**, click **+** (Add Source) → choose **Link** (or **Browser**).
+3. Paste your link from Step 3.
+4. Set size to **1080 × 1920**.
+5. Move it **above** your camera in the source list so it shows on top.
 
 ### OBS Studio
 
-1. **Settings → Video**: set Base and Output resolution to **1080x1920** (vertical).
-2. In **Sources**, click **+** → **Browser**, give it a name, click OK.
-3. Tick **Local file** and pick `index.html`, **or** untick it and paste your full link
-   in **URL** (you need the URL to use settings like `left=` and `timer=`).
-4. Width **1080**, Height **1920**. Click OK.
-5. To stream to TikTok from OBS you need a TikTok **Server URL + Stream Key**
-   (available in LIVE Studio / TikTok's LIVE settings if your account has access). Paste
-   them in **Settings → Stream → Service: Custom**.
+1. **Settings → Video** → set both resolutions to **1080x1920**.
+2. Under **Sources**, click **+** → **Browser** → OK.
+3. Paste your link into **URL** (leave *Local file* unticked).
+4. Width **1080**, Height **1920** → OK.
+5. To stream to TikTok from OBS, put TikTok's **Server URL** and **Stream Key** in
+   **Settings → Stream → Custom** (only if your TikTok account has stream-key access).
 
 ### Stream to Earn
 
-The overlay is a regular web page, so it works in any tool that lets you add a
-**browser / link / custom HTML source**:
+1. Add a **browser / link / custom overlay** source.
+2. Paste your link from Step 3.
+3. Keep **TikFinity** or **server.js** running on the same computer. That's where the votes come from.
 
-1. In Stream to Earn, add a browser, link or custom-overlay source.
-2. Paste the same overlay link (preferably the GitHub Pages one).
-3. Keep TikFinity or `server.js` running on the PC that streams, so votes reach the overlay.
+✅ **Check:** the overlay appears on your stream preview, and the corner says **● connected**.
 
-> Stream to Earn doesn't publish a way for custom overlays to receive its live events, so
-> the votes come from TikFinity or `server.js`, not from Stream to Earn itself.
+🎉 **Setup done!**
 
 ---
 
-## Step 7 – Go live and run a round
+# ✅ Every-stream checklist
 
-1. Start your TikTok LIVE.
-2. Start TikFinity **or** `node server.js your_username`.
-3. Check the overlay's corner label says **● connected**.
-4. Tell viewers: *"Comment 1 for Goku, 2 for Naruto, gifts are bonus votes!"*
-5. If you set a timer, it starts by itself (or press `T` if you used `autostart=0`).
-   When it hits **0:00**, voting locks and the winner banner appears.
-6. Press `R` to reset for the next round, then `T` to start the timer again.
+1. ☐ Go LIVE on TikTok.
+2. ☐ Start your helper: open **TikFinity**, *or* run `node server.js your_username`.
+3. ☐ Check the overlay corner says **● connected**.
+4. ☐ Tell viewers: *"Comment **1** for Goku, **2** for Naruto, gifts are bonus votes!"*
+5. ☐ The timer starts by itself. At **0:00** voting locks and the winner is shown 🏆
+6. ☐ Next round: press **`R`** (reset), then **`T`** (start timer).
 
-**Using the keyboard while live:** keys only work when the overlay itself has focus.
-
-- **OBS:** right-click the browser source → **Interact**, then press keys in that window.
-- **LIVE Studio:** if your version has no "interact" option, start each round by reloading
-  the source (with a timer and autostart, the round starts automatically).
+**How to press keys during a stream:**
+- **OBS:** right-click the overlay source → **Interact** → press keys in that window.
+- **TikTok LIVE Studio:** if there's no "interact" option, refresh the source to start a
+  new round (the timer restarts automatically).
 
 ---
 
-## Optional – Host it online with GitHub Pages
-
-Hosting the overlay gives it a normal `https://` address that works in every streaming app.
-
-1. In this repository on GitHub, go to **Settings → Pages**.
-2. Under **Build and deployment**, choose **Deploy from a branch**, branch **main**,
-   folder **/ (root)**, and click **Save**.
-3. After about a minute, your overlay is at:
-   ```
-   https://ricksdo353.github.io/your-username-tiktok-vote-overlay/
-   ```
-4. Upload your character images to the repository (**Add file → Upload files**) and use
-   them like before:
-   ```
-   https://ricksdo353.github.io/your-username-tiktok-vote-overlay/?left=Goku&right=Naruto&leftImg=left.png&rightImg=right.png&timer=2:00
-   ```
-
-The online version still talks to TikFinity / `server.js` on **your** PC, so you still
-need one of them running while you stream.
-
-> If you rename the repository, the Pages address changes to the new name.
-
----
+# Reference
 
 ## All settings
 
-Add these to the link after `?`, separated by `&`.
+Add any of these to your link with `&`.
 
-| Setting | Example | What it does | Default |
-|---|---|---|---|
-| `left` | `left=Goku` | Left (blue) character name | `Player One` |
-| `right` | `right=Naruto` | Right (purple) character name | `Player Two` |
-| `leftImg` | `leftImg=left.png` | Left picture (file or `https://` link) | placeholder |
-| `rightImg` | `rightImg=right.png` | Right picture | placeholder |
-| `q` | `q=BEST%20HERO%3F` | Title text | `WHO WINS?` |
-| `timer` | `timer=90` or `timer=2:30` | Round length (seconds or m:ss) | no timer |
-| `autostart` | `autostart=0` | Wait for `T` before starting the timer | starts automatically |
-| `ws` | `ws=ws://localhost:8080` | Where to get TikTok events (`ws=off` to disable) | `ws://localhost:21213/` (TikFinity) |
-| `giftA` | `giftA=Rose` | This gift always votes for the left side | – |
-| `giftB` | `giftB=TikTok` | This gift always votes for the right side | – |
-| `giftMult` | `giftMult=2` | Votes per diamond | `1` |
-| `likes` | `likes=0.1` | Votes per like (0.1 = 1 vote per 10 likes) | `0` (off) |
-| `cooldown` | `cooldown=5000` | Milliseconds between comment votes per viewer | `2000` |
-| `preview` | `preview=1` | Dark background for testing | off |
-| `demo` | `demo=1` | Fake votes for testing | off |
+**Basics**
+
+| Setting | Example | What it does |
+|---|---|---|
+| `left` | `left=Goku` | Left (blue) name. Default: *Player One* |
+| `right` | `right=Naruto` | Right (purple) name. Default: *Player Two* |
+| `leftImg` | `leftImg=left.png` | Left picture (file name or `https://` link) |
+| `rightImg` | `rightImg=right.png` | Right picture |
+| `q` | `q=BEST%20HERO%3F` | Title text. Default: *WHO WINS?* |
+
+**Timer**
+
+| Setting | Example | What it does |
+|---|---|---|
+| `timer` | `timer=90` or `timer=2:30` | Round length in seconds or minutes:seconds. No setting = no timer |
+| `autostart` | `autostart=0` | Don't start the timer automatically (press `T` to start) |
+
+**Votes**
+
+| Setting | Example | What it does |
+|---|---|---|
+| `giftA` | `giftA=Rose` | This gift always votes for the left side |
+| `giftB` | `giftB=TikTok` | This gift always votes for the right side |
+| `giftMult` | `giftMult=2` | Votes per gift diamond. Default: *1* |
+| `likes` | `likes=0.1` | Votes per like (`0.1` = 1 vote per 10 likes). Default: *off* |
+| `cooldown` | `cooldown=5000` | Wait time between a viewer's comment votes, in milliseconds. Default: *2000* (2 sec) |
+
+**Connection & testing**
+
+| Setting | Example | What it does |
+|---|---|---|
+| `ws` | `ws=ws://localhost:8080` | Helper address. Default is TikFinity's. Use this one for server.js |
+| `preview` | `preview=1` | Dark background for testing |
+| `demo` | `demo=1` | Fake votes for testing |
 
 **Full example:**
-
 ```
-index.html?left=Goku&right=Naruto&leftImg=left.png&rightImg=right.png&timer=3:00&giftA=Rose&giftB=TikTok&likes=0.05
+…/?left=Goku&right=Naruto&leftImg=left.png&rightImg=right.png&timer=3:00&giftA=Rose&giftB=TikTok&likes=0.05
 ```
-
----
 
 ## Keyboard controls
 
 | Key | Action |
 |---|---|
-| `1` / `2` | +1 vote left / right (hold `Shift` for +10) |
+| `1` / `2` | +1 vote left / right (`Shift` = +10) |
 | `R` | Reset votes and timer |
-| `D` | Start / stop demo mode |
-| `T` | Start / restart the timer (60s if no `timer` was set) |
-| `Space` | Pause / resume the timer |
-| `[` / `]` | Timer −15s / +15s |
+| `T` | Start / restart timer (60 sec if no timer set) |
+| `Space` | Pause / resume timer |
+| `[` / `]` | Timer −15 sec / +15 sec |
 | `Shift` + `[` / `]` | Timer −1 min / +1 min |
+| `D` | Demo mode on / off |
 
-Before a round starts, `[` and `]` change the round length; during a paused round they
-change only the time left.
-
----
+Tip: press `[` / `]` **before** pressing `T` to set the round length.
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---|---|
-| Label stays on **reconnecting…** | No connector is running. Start TikFinity or `node server.js username`. With server.js, check the link has `&ws=ws://localhost:8080`. |
-| `Connect failed` in the terminal | You're not live yet, or the username is wrong (no `@`). Go live; it retries every 10 seconds. |
-| `node` / `npm` is not recognized | Install Node.js from nodejs.org, then close and reopen the terminal. |
-| Pictures don't show | The image must be in the same folder as `index.html` (or on GitHub Pages), and the name must match exactly, including `.png`/`.jpg` and upper/lower case. |
-| Overlay has a dark background on stream | Remove `preview=1` from the link. |
-| Overlay is cut off or tiny | Set the source size to 1080 × 1920. The overlay scales itself to fit. |
-| Gifts don't count | The gifter must comment `1` or `2` first, or set `giftA` / `giftB` so certain gifts always count. |
-| Keys don't work | The overlay needs focus. In OBS use **Interact** on the source. |
-| Changes don't appear | Refresh the source (OBS: right-click → **Refresh cache of current page**). |
+**The corner says "reconnecting…"**
+→ Your helper isn't running. Open TikFinity, or run `node server.js your_username`.
+→ Using server.js? Make sure your link ends with `&ws=ws://localhost:8080`.
 
----
+**Terminal says "Connect failed"**
+→ Go LIVE first, and check the username (no `@`). It retries automatically.
 
-### Files
+**"node" or "npm" is not recognized**
+→ Install Node.js, then close and reopen the terminal.
 
-| File | Purpose |
+**Pictures don't show**
+→ The picture must be next to `index.html` and the name must match exactly
+(`Left.PNG` ≠ `left.png`).
+
+**Dark background on stream**
+→ Remove `preview=1` from your link.
+
+**Gifts don't add votes**
+→ The viewer must comment `1` or `2` first, or use `giftA` / `giftB` so certain gifts always count.
+
+**Overlay is cut off or too small**
+→ Set the source size to 1080 × 1920.
+
+**My changes don't show up**
+→ Refresh the source. In OBS: right-click → **Refresh cache of current page**.
+On GitHub Pages, changes can take ~1 minute to appear.
+
+## Files in this project
+
+| File | What it is |
 |---|---|
 | `index.html` | The overlay page |
-| `style.css` | Colors, layout and animations |
-| `script.js` | Voting, timer, and TikTok event handling |
-| `server.js` | Optional relay: TikTok LIVE → `ws://localhost:8080` |
-| `package.json` | Dependencies for `server.js` |
+| `style.css` | Colors, layout, animations |
+| `script.js` | Voting, timer, TikTok connection |
+| `server.js` | Optional helper (Option B) |
+| `package.json` | List of what `server.js` needs |
