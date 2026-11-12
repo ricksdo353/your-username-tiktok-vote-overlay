@@ -20,7 +20,7 @@
 | +38 מיקרו-שניות ליום, ~10 ק"מ ליום בלי תיקון | הסבר מקובל, מקור: הספר Relativity in the GPS (Ashby) |
 
 ## בנק נושאים
-אלה טיוטות. איתמר בוחר ומאשר, והנושאים מחולקים לתתי-סדרות כדי שהתוכן לא ייראה כמו תבנית אחידה.
+אלה טיוטות. אתה בוחר ומאשר, והנושאים מחולקים לתתי-סדרות כדי שהתוכן לא ייראה כמו תבנית אחידה.
 
 **Your Phone (סדרת המשך):** compass (part 2) · Face ID · touchscreen · wireless charging · why batteries die in the cold · how 5G works · noise-cancelling headphones · how a camera sees in the dark
 
