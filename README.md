@@ -75,13 +75,14 @@ You will choose **one** helper program in Step 5:
 TikTok gift = Eisenkot, other gifts count for the side the viewer commented:
 
 ```
-https://ricksdo353.github.io/your-username-tiktok-vote-overlay/?left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98&leftImg=images/netanyahu.jpg&rightImg=images/eisenkot.jpg&q=%D7%9E%D7%99%20%D7%99%D7%A0%D7%A6%D7%97%3F&hint=%D7%9B%D7%AA%D7%91%D7%95%201%20%D7%90%D7%95%202%20%C2%B7%20%D7%9E%D7%AA%D7%A0%D7%95%D7%AA%20%3D%20%D7%A0%D7%A7%D7%95%D7%93%D7%95%D7%AA&timer=10%3A00&autostart=0&giftA=Rose&giftB=TikTok&room=ppxt6f39
+https://ricksdo353.github.io/your-username-tiktok-vote-overlay/?left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98&leftImg=images/netanyahu.jpg&rightImg=images/eisenkot.jpg&q=%D7%9E%D7%99%20%D7%99%D7%A0%D7%A6%D7%97%3F&hint=%D7%9B%D7%AA%D7%91%D7%95%201%20%D7%90%D7%95%202%20%C2%B7%20%D7%9E%D7%AA%D7%A0%D7%95%D7%AA%20%3D%20%D7%A0%D7%A7%D7%95%D7%93%D7%95%D7%AA&timer=10%3A00&autostart=0&giftA=Rose&giftB=TikTok
 ```
 
-**Control panel link** (open on your phone or in a browser to run the rounds):
+**Control panel link** (open on your phone or in a browser to run the rounds). It creates
+a private room for you; follow [Control panel → Set it up](#set-it-up-once) to link it to the overlay:
 
 ```
-https://ricksdo353.github.io/your-username-tiktok-vote-overlay/control.html?room=ppxt6f39&left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98
+https://ricksdo353.github.io/your-username-tiktok-vote-overlay/control.html?left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98
 ```
 
 Photo credits:
