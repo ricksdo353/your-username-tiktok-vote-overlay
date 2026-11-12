@@ -3,7 +3,7 @@
    ---------------------------------------------------------
    Configure with URL parameters, e.g.
    index.html?left=Goku&right=Naruto&leftImg=goku.png&rightImg=naruto.png
-             &ws=ws://localhost:21213/&giftA=Rose&giftB=TikTok
+             &ws=ws://127.0.0.1:21213/&giftA=Rose&giftB=TikTok
 
    left / right       character names
    leftImg / rightImg image URL or local file (put files next to index.html)
@@ -11,7 +11,7 @@
    hint               text under the title (default "Comment 1 or 2 · Gifts = bonus votes")
    leftPos / rightPos which part of the photo to show, CSS object-position
                       (default "center 20%", keeps faces in frame)
-   ws                 WebSocket event source (default ws://localhost:21213/,
+   ws                 WebSocket event source (default ws://127.0.0.1:21213/,
                       which is TikFinity's local API; use ws://localhost:8080
                       for the included server.js relay). ws=off disables it.
    giftA / giftB      gift names that always count for side A / side B
@@ -50,7 +50,7 @@
     hint: P.get("hint") || "",
     leftPos: P.get("leftPos") || "",
     rightPos: P.get("rightPos") || "",
-    ws: P.get("ws") || "ws://localhost:21213/",
+    ws: P.get("ws") || "ws://127.0.0.1:21213/",
     // comma-separated gift names, e.g. giftA=Rose,Finger Heart
     giftA: (P.get("giftA") || "").split(",").map((g) => g.trim()).filter(Boolean),
     giftB: (P.get("giftB") || "").split(",").map((g) => g.trim()).filter(Boolean),
@@ -298,16 +298,23 @@
   function debugLog(text, side) { if (DEBUG) feed(text, side || ""); }
 
   /* ---------- TikTok event handling ---------- */
+  // Values can arrive as numbers or strings ("1", "false") depending on the connector
+  const pick = (...v) => v.find((x) => x !== undefined && x !== null && x !== "");
+  const num = (v, def = 0) => { const n = Number(v); return Number.isFinite(n) ? n : def; };
+  const bool = (v) => v === true || v === 1 || v === "1" || String(v).toLowerCase() === "true";
+
   // Accepts both {event, data} (TikFinity / server.js) and flat objects.
   function handle(msg) {
-    const type = (msg.event || msg.type || "").toLowerCase();
-    const d = msg.data || msg;
-    const user = d.nickname || d.uniqueId || d.user?.nickname || d.user?.uniqueId || "viewer";
-    const id = d.uniqueId || d.userId || d.user?.uniqueId || user;
+    if (!msg || typeof msg !== "object") return;
+    const type = String(msg.event || msg.type || msg.data?.event || msg.data?.type || "").toLowerCase();
+    const d = msg.data && typeof msg.data === "object" ? msg.data : msg;
+    const u = d.user || {};
+    const user = pick(d.nickname, u.nickname, d.uniqueId, u.uniqueId) || "viewer";
+    const id = String(pick(d.uniqueId, u.uniqueId, d.userId, u.userId) || user);
 
     if (type === "chat" || type === "comment") {
       const text = String(d.comment || d.text || "").trim().toLowerCase();
-      if (cfg.host && text.startsWith("!") && String(d.uniqueId || d.user?.uniqueId || "").toLowerCase() === cfg.host) {
+      if (cfg.host && text.startsWith("!") && String(pick(d.uniqueId, u.uniqueId) || "").toLowerCase() === cfg.host) {
         command(text.slice(1));
         return;
       }
@@ -327,18 +334,24 @@
     }
 
     else if (type === "gift") {
-      // Streakable gifts send many events; count only the final one.
-      // repeatEnd can be true/false or 1/0 depending on the connector
-      if (d.giftType === 1 && !d.repeatEnd) return;
-      const name = String(d.giftName || d.extendedGiftInfo?.name || "").toLowerCase();
+      const det = d.giftDetails || d.gift || {};
+      const ext = d.extendedGiftInfo || {};
+      // Streakable gifts (giftType 1) send an event for every gift in the streak with a
+      // running repeatCount; count only the final one (repeatEnd).
+      const giftType = num(pick(d.giftType, det.giftType, ext.type), 0);
+      if (giftType === 1 && !bool(pick(d.repeatEnd, d.repeat_end))) return;
+      const name = String(pick(d.giftName, det.giftName, d.gift_name, ext.name) || "").toLowerCase();
       let side = viewerSide.get(id) || null;
       if (cfg.giftA.some((g) => g.toLowerCase() === name)) side = "a";
       if (cfg.giftB.some((g) => g.toLowerCase() === name)) side = "b";
       if (!side) return debugLog(`🎁 ${user}: ${name} (לא בחר צד)`); // viewer hasn't picked a side yet
       if (!votingOpen()) return debugLog(`⏸ 🎁 ${user}: ${name} (סבב לא פעיל)`);
-      const pic = d.giftPictureUrl || d.giftDetails?.giftImage?.giftPictureUrl || d.gift?.icon?.url_list?.[0] || "";
+      const pic = pick(d.giftPictureUrl, d.giftImageUrl, det.giftPictureUrl, det.giftImage?.giftPictureUrl,
+        ext.image?.url_list?.[0], d.gift?.icon?.url_list?.[0]) || "";
       if (pic && !giftIcon(name)) { giftIcons[name] = pic; drawGiftChips(); }
-      const diamonds = (d.diamondCount || 1) * (d.repeatCount || 1);
+      const each = Math.max(1, num(pick(d.diamondCount, det.diamondCount, d.diamond_count, ext.diamond_count, d.coins), 1));
+      const count = Math.max(1, Math.floor(num(pick(d.repeatCount, d.repeat_count, d.comboCount), 1)));
+      const diamonds = each * count;
       const votes = Math.max(1, Math.round(diamonds * cfg.giftMult));
       const icon = giftIcon(name);
       add(side, votes, `${icon ? "" : "🎁 "}${user} +${votes} → ${side === "a" ? cfg.left : cfg.right}`, icon);
@@ -347,7 +360,7 @@
     else if (type === "like" && cfg.likes > 0) {
       const side = viewerSide.get(id);
       if (!side || !votingOpen()) return;
-      likeCarry[side] += (d.likeCount || 1) * cfg.likes;
+      likeCarry[side] += Math.max(1, num(pick(d.likeCount, d.count), 1)) * cfg.likes;
       const whole = Math.floor(likeCarry[side]);
       if (whole > 0) { likeCarry[side] -= whole; add(side, whole); }
     }
