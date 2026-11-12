@@ -1,0 +1,174 @@
+:root {
+  --blue: #2f8bff;
+  --blue-glow: #5fd0ff;
+  --purple: #8a3dff;
+  --purple-glow: #d17bff;
+  --ink: #ffffff;
+  --panel: rgba(12, 10, 40, 0.72);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  width: 100%; height: 100%;
+  overflow: hidden;
+  font-family: "Segoe UI", "Arial Black", system-ui, sans-serif;
+  color: var(--ink);
+  background: transparent; /* transparent for OBS / TikTok LIVE Studio */
+}
+body.preview {
+  background: radial-gradient(circle at 30% 20%, #1a2a6c, #0b0620 60%, #000);
+}
+
+/* 1080x1920 design canvas, scaled by script.js to fit any window */
+#stage {
+  position: absolute; left: 50%; top: 50%;
+  width: 1080px; height: 1920px;
+  transform-origin: center center;
+  display: flex; flex-direction: column; align-items: center;
+  padding: 90px 70px;
+  gap: 40px;
+}
+
+/* ---------- Title ---------- */
+.title { text-align: center; }
+.title h1 {
+  font-size: 110px; font-weight: 900; letter-spacing: 4px;
+  background: linear-gradient(90deg, var(--blue-glow), var(--purple-glow));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  filter: drop-shadow(0 6px 18px rgba(138, 61, 255, .6));
+}
+.title .hint {
+  margin-top: 10px; font-size: 38px; opacity: .9;
+  background: var(--panel); padding: 10px 28px; border-radius: 40px; display: inline-block;
+}
+.live-dot {
+  display: inline-block; width: 26px; height: 26px; border-radius: 50%;
+  background: #ff2d55; box-shadow: 0 0 20px #ff2d55; margin-bottom: 10px;
+  animation: blink 1.2s infinite;
+}
+
+/* ---------- Cards ---------- */
+.card {
+  width: 100%;
+  display: flex; align-items: center; gap: 44px;
+  padding: 36px 44px;
+  border-radius: 48px;
+  background: var(--panel);
+  border: 5px solid;
+  transition: transform .15s ease;
+}
+.card-a { border-color: var(--blue);   box-shadow: 0 0 50px rgba(47,139,255,.55), inset 0 0 40px rgba(47,139,255,.25); }
+.card-b { border-color: var(--purple); box-shadow: 0 0 50px rgba(138,61,255,.55), inset 0 0 40px rgba(138,61,255,.25); flex-direction: row-reverse; text-align: right; }
+.card.bump { transform: scale(1.04); }
+.card.leading .avatar-ring::after {
+  content: "👑"; position: absolute; top: -62px; left: 50%; transform: translateX(-50%);
+  font-size: 80px; filter: drop-shadow(0 4px 8px #000);
+}
+
+.avatar-ring {
+  position: relative; flex-shrink: 0;
+  width: 330px; height: 330px; border-radius: 50%; padding: 10px;
+}
+.card-a .avatar-ring { background: conic-gradient(var(--blue), var(--blue-glow), var(--blue)); }
+.card-b .avatar-ring { background: conic-gradient(var(--purple), var(--purple-glow), var(--purple)); }
+.avatar-ring img {
+  width: 100%; height: 100%; border-radius: 50%; object-fit: cover;
+  background: #111; border: 6px solid #0b0620; display: block;
+}
+
+.info { flex: 1; min-width: 0; }
+.tag {
+  display: inline-block; font-size: 30px; font-weight: 800; letter-spacing: 2px;
+  padding: 6px 20px; border-radius: 20px;
+}
+.card-a .tag { background: var(--blue); }
+.card-b .tag { background: var(--purple); }
+.info h2 {
+  font-size: 72px; font-weight: 900; margin: 10px 0 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  text-shadow: 0 4px 12px rgba(0,0,0,.6);
+}
+.score { font-size: 140px; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.card-a .score { color: var(--blue-glow);   text-shadow: 0 0 30px var(--blue); }
+.card-b .score { color: var(--purple-glow); text-shadow: 0 0 30px var(--purple); }
+
+/* ---------- VS badge ---------- */
+.vs-wrap { height: 0; position: relative; z-index: 5; display: flex; align-items: center; }
+.vs {
+  width: 220px; height: 220px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 100px; font-weight: 900; font-style: italic;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  border: 8px solid #fff;
+  box-shadow: 0 0 60px rgba(138,61,255,.9), 0 0 120px rgba(47,139,255,.5);
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+/* ---------- Percentage bar ---------- */
+.bar {
+  width: 100%; height: 110px; margin-top: 10px;
+  display: flex; border-radius: 60px; overflow: hidden;
+  border: 5px solid #fff; background: #111;
+  box-shadow: 0 0 40px rgba(138,61,255,.5);
+}
+.bar > div {
+  display: flex; align-items: center;
+  font-size: 50px; font-weight: 900; white-space: nowrap; overflow: hidden;
+  transition: width .5s cubic-bezier(.2,.9,.3,1.2);
+}
+.bar-a { width: 50%; background: linear-gradient(90deg, #1456c9, var(--blue), var(--blue-glow)); justify-content: flex-start; padding-left: 34px; }
+.bar-b { width: 50%; background: linear-gradient(90deg, var(--purple-glow), var(--purple), #4b14b5); justify-content: flex-end; padding-right: 34px; }
+
+/* ---------- Event feed ---------- */
+.feed {
+  width: 100%; flex: 1; display: flex; flex-direction: column; justify-content: flex-end;
+  gap: 14px; overflow: hidden;
+}
+.feed .item {
+  align-self: center;
+  font-size: 36px; padding: 12px 30px; border-radius: 30px;
+  background: var(--panel); animation: rise .35s ease-out;
+  max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.feed .item.a { border-left: 10px solid var(--blue); }
+.feed .item.b { border-left: 10px solid var(--purple); }
+
+/* ---------- Timer ---------- */
+.timer {
+  margin: 22px auto 0; width: fit-content;
+  font-size: 76px; font-weight: 900; font-variant-numeric: tabular-nums;
+  padding: 8px 46px; border-radius: 60px;
+  background: linear-gradient(90deg, rgba(47,139,255,.85), rgba(138,61,255,.85));
+  border: 4px solid #fff; box-shadow: 0 0 40px rgba(138,61,255,.6);
+}
+.timer.paused { opacity: .55; }
+.timer.urgent { background: linear-gradient(90deg, #ff2d55, #ff7a2d); animation: tick 1s infinite; }
+.timer.done   { background: #333; }
+.hidden { display: none !important; }
+
+/* ---------- Winner banner ---------- */
+.winner {
+  position: absolute; left: 70px; right: 70px; top: 50%; transform: translateY(-50%);
+  z-index: 20; text-align: center; padding: 50px 30px; border-radius: 50px;
+  border: 8px solid #fff; animation: pop .5s cubic-bezier(.2,.9,.3,1.4);
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  box-shadow: 0 0 120px rgba(138,61,255,.9);
+}
+.winner.a { background: linear-gradient(135deg, #1456c9, var(--blue), var(--blue-glow)); }
+.winner.b { background: linear-gradient(135deg, #4b14b5, var(--purple), var(--purple-glow)); }
+.winner-label { font-size: 60px; font-weight: 800; letter-spacing: 4px; opacity: .9; }
+.winner-name  { font-size: 120px; font-weight: 900; line-height: 1.1; text-shadow: 0 6px 20px rgba(0,0,0,.5); }
+
+@keyframes tick { 50% { transform: scale(1.08); } }
+@keyframes pop  { from { opacity: 0; transform: translateY(-50%) scale(.6); } to { opacity: 1; transform: translateY(-50%) scale(1); } }
+
+.status {
+  position: absolute; bottom: 24px; right: 30px;
+  font-size: 24px; opacity: .55; padding: 6px 16px; border-radius: 14px; background: rgba(0,0,0,.4);
+}
+.status.on { color: #6dff9b; }
+
+@keyframes pulse { 0%,100% { transform: scale(1) rotate(-6deg); } 50% { transform: scale(1.1) rotate(6deg); } }
+@keyframes blink { 50% { opacity: .2; } }
+@keyframes rise  { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TikTok LIVE Vote Overlay</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="stage">
+    <header class="title">
+      <span class="live-dot"></span>
+      <h1 id="question">WHO WINS?</h1>
+      <p class="hint">Comment <b>1</b> or <b>2</b> &middot; Gifts = bonus votes</p>
+      <div class="timer hidden" id="timer"><span class="clock">⏱</span> <span id="timerText">1:00</span></div>
+    </header>
+
+    <!-- Character A (blue) -->
+    <section class="card card-a" id="cardA">
+      <div class="avatar-ring"><img id="imgA" alt="Character A" /></div>
+      <div class="info">
+        <span class="tag">COMMENT 1</span>
+        <h2 id="nameA">Player One</h2>
+        <div class="score" id="scoreA">0</div>
+      </div>
+    </section>
+
+    <!-- VS badge -->
+    <div class="vs-wrap"><div class="vs" id="vs">VS</div></div>
+
+    <!-- Character B (purple) -->
+    <section class="card card-b" id="cardB">
+      <div class="avatar-ring"><img id="imgB" alt="Character B" /></div>
+      <div class="info">
+        <span class="tag">COMMENT 2</span>
+        <h2 id="nameB">Player Two</h2>
+        <div class="score" id="scoreB">0</div>
+      </div>
+    </section>
+
+    <!-- Percentage bar -->
+    <div class="bar">
+      <div class="bar-a" id="barA"><span id="pctA">50%</span></div>
+      <div class="bar-b" id="barB"><span id="pctB">50%</span></div>
+    </div>
+
+    <div class="winner hidden" id="winner">
+      <div class="winner-label">TIME'S UP!</div>
+      <div class="winner-name" id="winnerName">WINNER</div>
+    </div>
+
+    <div class="feed" id="feed"></div>
+    <div class="status" id="status">offline</div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
