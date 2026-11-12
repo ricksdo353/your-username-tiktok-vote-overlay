@@ -108,8 +108,8 @@
   const giftIcons = {
     rose: "images/gifts/rose.png",
     tiktok: "images/gifts/tiktok.png",
-    perfume: "images/gifts/perfume.png",
-    "traffic cone": "images/gifts/traffic-cone.png",
+    "hand heart": "images/gifts/hand-heart.png",
+    confetti: "images/gifts/confetti.png",
   };
   if (P.get("giftAImg")) cfg.giftA.forEach((g) => (giftIcons[g.toLowerCase()] = P.get("giftAImg")));
   if (P.get("giftBImg")) cfg.giftB.forEach((g) => (giftIcons[g.toLowerCase()] = P.get("giftBImg")));

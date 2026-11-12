@@ -75,8 +75,8 @@ You will choose **one** helper program in Step 5:
 
 **Overlay link** (paste into TikTok LIVE Studio → Sources → Link, 1080×1920).
 10-minute rounds started from the control panel, Hebrew text.
-Gifts: 🌹 Rose (1 coin) and Perfume (20 coins) = Netanyahu; TikTok (1 coin) and Traffic Cone
-(20 coins) = Eisenkot. Prices checked against the Israel gift list on
+Gifts: 🌹 Rose (1 coin) and Hand Heart (100 coins) = Netanyahu; TikTok (1 coin) and
+Confetti (100 coins) = Eisenkot. Both sides get gifts of exactly the same price. Prices checked against the Israel gift list on
 [streamtoearn.io](https://streamtoearn.io/gifts?region=IL). Every coin = 1 point. Other gifts count for the side the viewer commented:
 
 ```
@@ -359,7 +359,7 @@ Add any of these to your link with `&`.
 |---|---|---|
 | `giftA` | `giftA=Rose` | Gift(s) that always give points to the left side. Several: `giftA=Rose,Finger%20Heart` |
 | `giftB` | `giftB=TikTok` | Gift(s) that always give points to the right side |
-| `giftAImg` / `giftBImg` | `giftAImg=images/gifts/heart.png` | Picture for that side's gift. Rose, TikTok, Perfume and Traffic Cone already have built-in pictures; other gifts get their picture automatically from the first one sent |
+| `giftAImg` / `giftBImg` | `giftAImg=images/gifts/heart.png` | Picture for that side's gift. Rose, TikTok, Hand Heart and Confetti already have built-in pictures; other gifts get their picture automatically from the first one sent |
 | `giftMult` | `giftMult=2` | Votes per gift diamond. Default: *1* |
 | `likes` | `likes=0.1` | Votes per like (`0.1` = 1 vote per 10 likes). Default: *off* |
 | `cooldown` | `cooldown=5000` | Wait time between a viewer's comment votes, in milliseconds. Default: *2000* (2 sec) |
@@ -377,7 +377,7 @@ Add any of these to your link with `&`.
 
 **Full example:**
 ```
-…/?left=Goku&right=Naruto&leftImg=left.png&rightImg=right.png&timer=3:00&giftA=Rose%2CPerfume&giftB=TikTok%2CTraffic%20Cone&likes=0.05
+…/?left=Goku&right=Naruto&leftImg=left.png&rightImg=right.png&timer=3:00&giftA=Rose%2CHand%20Heart&giftB=TikTok%2CConfetti&likes=0.05
 ```
 
 ## Keyboard controls
@@ -437,6 +437,6 @@ On GitHub Pages, changes can take ~1 minute to appear.
 | `control.html` | Remote control panel (phone / browser) |
 | `style.css` | Colors, layout, animations |
 | `script.js` | Voting, timer, TikTok connection |
-| `images/gifts/` | Gift pictures: Rose, TikTok, Perfume, Traffic Cone |
+| `images/gifts/` | Gift pictures: Rose, TikTok, Hand Heart, Confetti |
 | `server.js` | Optional helper (Option B) |
 | `package.json` | List of what `server.js` needs |
