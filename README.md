@@ -23,7 +23,7 @@ Viewers comment **1** or **2** to vote, gifts give bonus votes, and a timer anno
 - [🇮🇱 נתניהו נגד איזנקוט](#-ready-made-נתניהו-נגד-איזנקוט)
 
 **Second board**
-- [🏎️ Country car race (4 teams)](#️-country-car-race-4-teams)
+- [🏎️ Country car race (10 countries)](#️-country-car-race-10-countries)
 
 **Using it**
 - [🎮 Control panel](#-control-panel)
@@ -316,19 +316,35 @@ your own LIVE chat:
 
 ---
 
-# 🏎️ Country car race (4 teams)
+# 🏎️ Country car race (10 countries)
 
-A second board with its own link: **`battle.html`**. Four cars race to the finish line:
-**1 = 🇮🇱 ישראל · 2 = 🇵🇸 פלסטין · 3 = 🇺🇸 ארה״ב · 4 = 🇮🇷 איראן** (each car has its country's colors and flag). It connects to TikTok exactly like the vote board
-(TikFinity or `server.js`, Steps 5–6), and uses the same control panel.
+A second board with its own link: **`battle.html`**. Ten cars race to the finish line.
+Each country has a number, a flag, a car in its colors, and **its own gift**. All ten gifts are
+popular **1-coin** gifts, checked on the [Israel gift list](https://streamtoearn.io/gifts?region=IL),
+and every one of them = **1 point** for its country (a streak of 5 = 5 points):
+
+| # | Country | Gift (1 coin) |
+|---|---|---|
+| 1 | ישראל 🇮🇱 | Rose |
+| 2 | פלסטין 🇵🇸 | TikTok |
+| 3 | ארה״ב 🇺🇸 | GG |
+| 4 | איראן 🇮🇷 | Ice Cream Cone |
+| 5 | רוסיה 🇷🇺 | Cake Slice |
+| 6 | אוקראינה 🇺🇦 | Glow Stick |
+| 7 | מרוקו 🇲🇦 | Thumbs Up |
+| 8 | מצרים 🇪🇬 | Heart |
+| 9 | טורקיה 🇹🇷 | Love you |
+| 10 | סעודיה 🇸🇦 | Blow a kiss |
 
 **How viewers play**
-1. A viewer comments **1**, **2**, **3** or **4** to join that country (they stay with it until the round ends).
-2. Every comment of their team number = **+1** point (once every 2 seconds per viewer).
-3. Their gifts go to their team: **1 coin = 1 point**. Their likes help too (10 likes = 1 point).
-4. Each country's car drives toward the finish line. The first team to the goal (default **1,000**) wins.
-5. The winner and the team's MVP (who gave the most points) are shown, and after 15 seconds
-   a new round starts by itself. Everyone can pick a team again.
+1. Comment **1**–**10** to join a country, or just send a country's gift (that joins them too).
+   They stay with that country until the race ends.
+2. Every comment of their number = **+1** point (once every 2 seconds per viewer).
+3. A country's own gift always counts for that country, from anyone. Any other gift counts for the
+   viewer's country: **1 coin = 1 point**. Likes help too (10 likes = 1 point).
+4. The cars drive toward the checkered line. The leader gets a 👑, a car close to the goal gets a nitro flame.
+5. The first country to the goal (default **1,000**) wins. Its flag, name and MVP are shown,
+   and after 15 seconds a new race starts by itself.
 
 **Link** (paste into TikTok LIVE Studio → Sources → Link, 1080×1920):
 
@@ -340,27 +356,29 @@ Add settings to the end of the link, starting with `?` and joined with `&`. Exam
 
 | Setting | Example | What it does |
 |---|---|---|
-| `t1`…`t4` | `t3=מצרים` | Country / team names (default ישראל, פלסטין, ארה״ב, איראן). A renamed team has no flag unless you add `flagN` |
-| `flag1`…`flag4` | `flag3=https://…/egypt.png` | Flag picture for a team (`flag3=none` hides it) |
+| `teams` | `teams=4` | How many countries race, 2–10 (the first ones in the table) |
+| `t1`…`t10` | `t5=צרפת` | Rename a country. A renamed one has no flag unless you add `flagN` |
+| `flag1`…`flag10` | `flag5=https://…/fr.svg` | Flag picture (`flag5=none` hides it) |
+| `gift1`…`gift10` | `gift5=Finger Heart` | Change a country's gift (`gift5=none` = no gift) |
+| `giftImg1`…`giftImg10` | `giftImg5=https://…/gift.png` | Picture for a changed gift |
 | `goal` | `goal=500` | Points to win (`goal=0` = no goal, the timer decides) |
-| `timer` | `timer=5:00` | Round length; when it hits 0 the leading team wins (default: no timer) |
-| `next` | `next=30` | Seconds the winner is shown before a new round (default `15`, `next=0` = off) |
+| `timer` | `timer=5:00` | Race length; when it hits 0 the leader wins (default: no timer) |
+| `next` | `next=30` | Seconds the winner is shown before a new race (default `15`, `next=0` = off) |
 | `likes` | `likes=0` | Points per like (default `0.1`; `0` turns likes off) |
-| `chat` | `chat=0` | Points per comment (default `1`; `0` = comments only pick a team) |
-| `gift1`…`gift4` | `gift1=Rose` | A gift that always counts for that team, even from viewers with no team |
+| `chat` | `chat=0` | Points per comment (default `1`; `0` = comments only pick a country) |
 | `room` | `room=yourroom` | Control panel room (same as the vote board) |
 
-Example with a 5-minute timer and a goal of 2,000:
-`https://ricksdo353.github.io/your-username-tiktok-vote-overlay/battle.html?goal=2000&timer=5:00`
-
-**Control panel:** paste the battle link into the panel's "חיבור ל-overlay" box to add your room,
+**Control panel:** paste the race link into the panel's "חיבור ל-overlay" box to add your room,
 exactly like the vote board. Start / pause / reset / end and the time buttons work the same.
-The **🏎️ מרוץ מדינות** section has +10 / −10 per team and goal presets.
-If the vote board and the battle board are both open with the same room, a button controls both,
+The **🏎️ מרוץ מדינות** section has +10 / −10 for each country and goal presets.
+If the vote board and the race are both open with the same room, a button controls both,
 so use one board at a time (or give them different rooms).
 
-**Keyboard:** `1`–`4` = +1 (Shift = +10), `T` = new round, `Space` = pause, `R` = reset, `D` = demo.
+**Keyboard:** `1`–`9` and `0` (= 10) = +1 (Shift = +10), `T` = new race, `Space` = pause, `R` = reset, `D` = demo.
 Try it in a browser with `battle.html?preview=1&demo=1`.
+
+Flags: [flag-icons](https://github.com/lipis/flag-icons) (MIT, see `images/flags/LICENSE-flag-icons.txt`).
+Gift pictures: TikTok's own gift images.
 
 ---
 
@@ -501,11 +519,12 @@ On GitHub Pages, changes can take ~1 minute to appear.
 | File | What it is |
 |---|---|
 | `index.html` | The overlay page |
-| `battle.html` · `battle.css` · `battle.js` | Country car race board (4 teams) |
+| `battle.html` · `battle.css` · `battle.js` | Country car race board (10 countries) |
+| `images/flags/` | Country flags (flag-icons, MIT) |
 | `control.html` | Remote control panel (phone / browser) |
 | `style.css` | Colors, layout, animations |
 | `fonts/` | Heebo Hebrew font (SIL Open Font License) |
 | `script.js` | Voting, timer, TikTok connection |
-| `images/gifts/` | Gift pictures: Rose, TikTok, Hand Heart, Confetti |
+| `images/gifts/` | Gift pictures (Rose, TikTok, Hand Heart, Confetti and the race gifts) |
 | `server.js` | Optional helper (Option B) |
 | `package.json` | List of what `server.js` needs |

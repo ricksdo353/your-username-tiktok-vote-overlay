@@ -1,38 +1,69 @@
 /* =========================================================
-   TikTok LIVE Country Race (4 cars) – battle.html
-   Viewers join a team by commenting its number (1-4). Every comment, like and
-   gift from a team member pushes that team's runner toward the finish line.
-   First team to the goal wins (or the leader when the timer runs out); the
-   winner is shown, then everything resets and a new round starts by itself.
+   TikTok LIVE Country Race (10 cars) – battle.html
+   Viewers join a country by commenting its number (1-10), or by sending that
+   country's gift. Every comment, like and gift pushes the country's car toward
+   the finish line. First country to the goal wins (or the leader when the
+   timer runs out); the winner is shown, then a new race starts by itself.
+
+   Each country has its own popular 1-coin gift (checked on streamtoearn.io for
+   Israel): every one of those gifts = 1 point for that country, from anyone.
 
    URL parameters (all optional):
-   t1 t2 t3 t4        team names (default ישראל, פלסטין, ארה״ב, איראן)
-   flag1 … flag4      flag picture URL for a team (flagN=none hides it); a renamed
-                      team has no flag unless you give one
+   teams              how many countries race, 2-10 (default 10, in the order below)
+   t1 … t10           names (default ישראל, פלסטין, ארה״ב, איראן, רוסיה, אוקראינה,
+                      מרוקו, מצרים, טורקיה, סעודיה)
+   flag1 … flag10     flag picture for a country (flagN=none hides it); a renamed
+                      country has no flag unless you give one
+   gift1 … gift10     gift name(s) for a country, comma separated (giftN=none = no gift)
+   giftImg1 …         picture for that gift
    goal               points to win (default 1000; goal=0 = no goal, timer only)
-   timer              round length, seconds or m:ss (default none)
-   next               seconds the winner is shown before a new round starts
+   timer              race length, seconds or m:ss (default none)
+   next               seconds the winner is shown before a new race starts
                       by itself (default 15; next=0 = off)
-   chat               points per comment of the team number (default 1)
+   chat               points per comment of the country number (default 1)
    cooldown           ms between counted comments from one viewer (default 2000)
    likes              points per like (default 0.1 = 10 likes are 1 point; 0 = off)
    giftMult           points per coin (default 1)
-   gift1 … gift4      gift names that always go to that team, e.g. gift1=Rose
    room / host / ws / bg / bigGift / takeover / countdown / autostart / preview /
    demo / debug       same as the vote board (index.html)
 
-   Keyboard: 1-4 = +1 (Shift = +10), R = reset, T = new round, Space = pause,
-             D = demo, [ / ] = -15s / +15s
+   Keyboard: 1-9 and 0 (=10) = +1 (Shift = +10), R = reset, T = new race,
+             Space = pause, D = demo, [ / ] = -15s / +15s
    ========================================================= */
 
 (() => {
   const P = new URLSearchParams(location.search);
   const num = (v, def = 0) => { const n = Number(v); return Number.isFinite(n) ? n : def; };
+  const giftKey = (g) => String(g || "").toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, " ").trim();
+
+  // Default countries: flag (images/flags), 1-coin gift (images/gifts), car colours
+  const DEFAULTS = [
+    ["ישראל", "il", "Rose", "rose", "#2f8bff", "#1456c9"],
+    ["פלסטין", "ps", "TikTok", "tiktok", "#1fa055", "#0d6b37"],
+    ["ארה״ב", "us", "GG", "gg", "#e0283c", "#9c1224"],
+    ["איראן", "ir", "Ice Cream Cone", "ice-cream-cone", "#ff8a1f", "#b85a00"],
+    ["רוסיה", "ru", "Cake Slice", "cake-slice", "#6a5cff", "#3b2fc9"],
+    ["אוקראינה", "ua", "Glow Stick", "glow-stick", "#f5c400", "#9c7c00"],
+    ["מרוקו", "ma", "Thumbs Up", "thumbs-up", "#c2185b", "#7f0f3c"],
+    ["מצרים", "eg", "Heart", "heart", "#b8862b", "#76561a"],
+    ["טורקיה", "tr", "Love you", "love-you", "#ff5c8a", "#c2264f"],
+    ["סעודיה", "sa", "Blow a kiss", "blow-a-kiss", "#12a5a0", "#0a6b68"],
+  ];
+  const N = Math.min(10, Math.max(2, Math.floor(num(P.get("teams") ?? 10, 10))));
+  const TEAMS = DEFAULTS.slice(0, N).map(([name, flag, gift, gimg, c1, c2], i) => {
+    const k = i + 1, renamed = !!P.get("t" + k);
+    const fp = P.get("flag" + k), gp = P.get("gift" + k);
+    const gifts = gp === "none" ? [] : (gp ? gp.split(",") : [gift]).map(giftKey).filter(Boolean);
+    return {
+      name: P.get("t" + k) || name,
+      flag: fp === "none" ? "" : fp || (renamed ? "" : `images/flags/${flag}.svg`),
+      gifts,
+      giftLabel: gp === "none" ? "" : gp ? gp.split(",")[0].trim() : gift,
+      giftImg: P.get("giftImg" + k) || (gp ? "" : `images/gifts/${gimg}.png`),
+      c: [c1, c2],
+    };
+  });
   const cfg = {
-    names: [1, 2, 3, 4].map((i, k) => P.get("t" + i) || ["ישראל", "פלסטין", "ארה״ב", "איראן"][k]),
-    flags: [1, 2, 3, 4].map((i) => P.get("flag" + i)),
-    imgs: [1, 2, 3, 4].map((i) => P.get("img" + i) || ""),
-    gifts: [1, 2, 3, 4].map((i) => (P.get("gift" + i) || "").split(",").map((g) => g.trim().toLowerCase()).filter(Boolean)),
     goal: Math.max(0, Math.floor(num(P.get("goal") ?? 1000, 1000))),
     next: Math.max(0, Math.floor(num(P.get("next") ?? 15, 15))),
     chat: Math.max(0, num(P.get("chat") ?? 1, 1)),
@@ -48,45 +79,17 @@
     takeover: P.get("takeover") !== "0",
     countdown: P.get("countdown") !== "0",
   };
-  const COL = [["#2f8bff", "#1456c9"], ["#1fa055", "#0d6b37"], ["#e0283c", "#9c1224"], ["#ff8a1f", "#b85a00"]];
-  // Flags drawn here (public-domain designs) so they show everywhere, even where flag emoji don't (Windows / LIVE Studio)
-  const svgUri = (w, h, body) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${h}' preserveAspectRatio='xMidYMid slice'>${body}</svg>`);
-  const usStars = (() => { let d = ""; for (let r = 0; r < 9; r++) for (let k = 0; k < (r % 2 ? 5 : 6); k++) d += `<circle cx='${(r % 2 ? 12.6 : 6.3) + k * 12.6}' cy='${5.4 + r * 5.4}' r='2.1'/>`; return d; })();
-  const FLAGS = [
-    svgUri(220, 160, "<rect width='220' height='160' fill='#fff'/><rect y='15' width='220' height='25' fill='#0038b8'/><rect y='120' width='220' height='25' fill='#0038b8'/>" +
-      "<g fill='none' stroke='#0038b8' stroke-width='5.5'><path d='M110 50L136 95H84Z'/><path d='M110 110L136 65H84Z'/></g>"),
-    svgUri(300, 150, "<rect width='300' height='50' fill='#000'/><rect y='50' width='300' height='50' fill='#fff'/><rect y='100' width='300' height='50' fill='#149954'/><path d='M0 0L100 75L0 150Z' fill='#e4312b'/>"),
-    svgUri(190, 100, Array.from({ length: 13 }, (_, r) => `<rect y='${(r * 100 / 13).toFixed(2)}' width='190' height='${(100 / 13).toFixed(2)}' fill='${r % 2 ? "#fff" : "#b22234"}'/>`).join("") +
-      `<rect width='76' height='53.85' fill='#3c3b6e'/><g fill='#fff'>${usStars}</g>`),
-    svgUri(630, 360, "<rect width='630' height='120' fill='#239f40'/><rect y='120' width='630' height='120' fill='#fff'/><rect y='240' width='630' height='120' fill='#da0000'/>" +
-      "<g fill='none' stroke='#da0000' stroke-width='9' stroke-linecap='round'><path d='M315 140v80'/><path d='M298 150q-26 30 0 62'/><path d='M332 150q26 30 0 62'/>" +
-      "<path d='M282 138q-46 46 2 92'/><path d='M348 138q46 46-2 92'/></g>"),
-  ];
-  cfg.flags = cfg.flags.map((f, i) => (f === "none" ? "" : f || (P.get("t" + (i + 1)) ? "" : FLAGS[i])));
-  const CAR_W = 190;
-  const carSvg = (i, flag) => `<svg viewBox="0 0 190 84" aria-hidden="true">
-    <ellipse cx="96" cy="80" rx="88" ry="5" fill="rgba(0,0,0,.45)"/>
-    <path class="flame" d="M184 46 L214 40 L204 50 L222 56 L184 58 Z" fill="#ffb02e"/>
-    <path d="M6 60 Q4 44 20 40 L54 34 Q72 14 100 12 L132 12 Q154 14 166 32 L178 36 Q190 40 188 60 Z" fill="${COL[i][0]}" stroke="#fff" stroke-width="3"/>
-    <path d="M6 60 L188 60 L186 52 L8 52 Z" fill="${COL[i][1]}"/>
-    <path d="M62 34 Q76 21 98 19 L104 19 L104 34 Z M110 19 L128 19 Q142 21 152 34 L110 34 Z" fill="#0b1530" opacity=".88"/>
-    <ellipse cx="13" cy="46" rx="6" ry="4" fill="#fff6c0"/><rect x="180" y="40" width="7" height="8" rx="2" fill="#ff2d2d"/>
-    ${flag ? `<image href="${flag}" x="112" y="37" width="40" height="24" preserveAspectRatio="xMidYMid slice"/><rect x="112" y="37" width="40" height="24" fill="none" stroke="#fff" stroke-width="2"/>` : ""}
-    <circle cx="80" cy="46" r="11" fill="#fff"/><text x="80" y="51.5" text-anchor="middle" font-size="16" font-weight="900" font-family="Heebo, Arial" fill="${COL[i][1]}">${i + 1}</text>
-    <g class="wheel"><circle cx="46" cy="62" r="17" fill="#111"/><circle cx="46" cy="62" r="8" fill="#c9c9d6"/><path d="M46 47v30M31 62h30" stroke="#555" stroke-width="3"/></g>
-    <g class="wheel"><circle cx="150" cy="62" r="17" fill="#111"/><circle cx="150" cy="62" r="8" fill="#c9c9d6"/><path d="M150 47v30M135 62h30" stroke="#555" stroke-width="3"/></g>
-  </svg>`;
   const $ = (id) => document.getElementById(id);
   const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const fmt = (n) => Math.floor(n).toLocaleString("en-US");
   const anim = (el, frames, opts) => { try { return el.animate(frames, opts); } catch (_) { return null; } };
   const DEBUG = P.get("debug") === "1";
 
-  const pts = [0, 0, 0, 0];
+  const pts = new Array(N).fill(0);
+  const likeCarry = new Array(N).fill(0);
   const members = new Map();  // viewer id -> team index
   const contrib = new Map();  // viewer id -> { name, team, pts }
   const lastChat = new Map();
-  const likeCarry = [0, 0, 0, 0];
   const round = { running: false, ended: false };
 
   /* ---------- stage ---------- */
@@ -104,25 +107,46 @@
       $("dots").appendChild(d);
     }
   })();
+  $("hint").innerHTML = `כתבו <span class="grad ltr">1–${N}</span> או שלחו מתנה`;
   setInterval(() => { $("title").classList.toggle("off"); $("hint").classList.toggle("off"); }, 5000);
 
   /* ---------- lanes ---------- */
-  const lanes = cfg.names.map((name, i) => {
+  const ROAD_W = 412, CAR_W = 112, LANE_H = 80;
+  const TOP = 374, AREA = 888;
+  const PITCH = Math.min(118, Math.floor(AREA / N));
+  const laneTop = (i) => TOP + Math.round((AREA - N * PITCH) / 2) + i * PITCH;
+  const carSvg = (i, flag) => {
+    const [c1, c2] = TEAMS[i].c, n = i + 1;
+    return `<svg viewBox="0 0 190 84" aria-hidden="true">
+    <ellipse cx="96" cy="80" rx="88" ry="5" fill="rgba(0,0,0,.45)"/>
+    <path class="flame" d="M184 46 L214 40 L204 50 L222 56 L184 58 Z" fill="#ffb02e"/>
+    <path d="M6 60 Q4 44 20 40 L54 34 Q72 14 100 12 L132 12 Q154 14 166 32 L178 36 Q190 40 188 60 Z" fill="${c1}" stroke="#fff" stroke-width="4"/>
+    <path d="M6 60 L188 60 L186 52 L8 52 Z" fill="${c2}"/>
+    <path d="M62 34 Q76 21 98 19 L104 19 L104 34 Z M110 19 L128 19 Q142 21 152 34 L110 34 Z" fill="#0b1530" opacity=".88"/>
+    <ellipse cx="13" cy="46" rx="6" ry="4" fill="#fff6c0"/><rect x="180" y="40" width="7" height="8" rx="2" fill="#ff2d2d"/>
+    ${flag ? `<image href="${flag}" x="110" y="36" width="42" height="26" preserveAspectRatio="xMidYMid slice"/><rect x="110" y="36" width="42" height="26" fill="none" stroke="#fff" stroke-width="2.5"/>` : ""}
+    <circle cx="80" cy="47" r="13" fill="#fff"/><text x="80" y="${n > 9 ? 52 : 53}" text-anchor="middle" font-size="${n > 9 ? 15 : 18}" font-weight="900" font-family="Heebo, Arial" fill="${c2}">${n}</text>
+    <g class="wheel"><circle cx="46" cy="62" r="17" fill="#111"/><circle cx="46" cy="62" r="8" fill="#c9c9d6"/><path d="M46 47v30M31 62h30" stroke="#555" stroke-width="3"/></g>
+    <g class="wheel"><circle cx="150" cy="62" r="17" fill="#111"/><circle cx="150" cy="62" r="8" fill="#c9c9d6"/><path d="M150 47v30M135 62h30" stroke="#555" stroke-width="3"/></g>
+  </svg>`;
+  };
+  const lanes = TEAMS.map((t, i) => {
     const el = document.createElement("div");
-    el.className = "lane";
-    el.style.top = i * 200 + "px";
-    el.style.setProperty("--c", COL[i][0]); el.style.setProperty("--c2", COL[i][1]);
-    const flag = cfg.imgs[i] || cfg.flags[i];
-    if (!flag) el.classList.add("noflag");
-    el.innerHTML = `<div class="badge">${i + 1}</div><div class="crown">👑</div>${flag ? '<img class="flag" alt="">' : ""}
-      <div class="tname"></div><div class="members">👥 <span class="mc">0</span></div><div class="pts">0</div>
+    el.className = "lane" + (t.flag ? "" : " noflag");
+    el.style.top = laneTop(i) + "px";
+    el.style.setProperty("--c", t.c[0]); el.style.setProperty("--c2", t.c[1]);
+    el.innerHTML = `<div class="badge">${i + 1}</div><div class="crown">👑</div>${t.flag ? '<img class="flag" alt="">' : ""}
+      <div class="tname"></div>
+      <div class="meta"><span class="gname"></span><span class="mem">👥 <span class="mc">0</span></span></div>${t.giftImg ? '<img class="gift" alt="">' : ""}
+      <div class="pts">0</div>
       <div class="road"><div class="fill"></div><div class="dash"></div><div class="flash"></div><div class="finish"></div></div>
-      <div class="car">${carSvg(i, flag)}</div>`;
-    el.querySelector(".tname").textContent = name;
-    if (flag) el.querySelector(".flag").src = flag;
-    const runner = el.querySelector(".car");
+      <div class="car">${carSvg(i, t.flag)}</div>`;
+    el.querySelector(".tname").textContent = t.name;
+    el.querySelector(".gname").textContent = t.giftImg ? "" : t.giftLabel ? "🎁 " + t.giftLabel : "";
+    if (t.flag) el.querySelector(".flag").src = t.flag;
+    if (t.giftImg) { const g = el.querySelector(".gift"); g.src = t.giftImg; g.onerror = () => { g.remove(); el.querySelector(".gname").textContent = "🎁 " + t.giftLabel; }; }
     $("lanes").appendChild(el);
-    return { el, runner, fill: el.querySelector(".fill"), flash: el.querySelector(".flash"), pts: el.querySelector(".pts"), mc: el.querySelector(".mc") };
+    return { el, car: el.querySelector(".car"), fill: el.querySelector(".fill"), flash: el.querySelector(".flash"), pts: el.querySelector(".pts"), mc: el.querySelector(".mc") };
   });
 
   function teamSize(i) { let n = 0; members.forEach((t) => { if (t === i) n++; }); return n; }
@@ -136,7 +160,7 @@
     lanes.forEach((l, i) => {
       const p = progress(i);
       l.fill.style.width = (p * 100).toFixed(2) + "%";
-      l.runner.style.right = (p * (900 - CAR_W)).toFixed(1) + "px";
+      l.car.style.right = (900 - ROAD_W + p * (ROAD_W - CAR_W)).toFixed(1) + "px";
       l.pts.textContent = fmt(pts[i]);
       l.mc.textContent = teamSize(i);
       l.el.classList.toggle("lead", max > 0 && leaders === 1 && pts[i] === max);
@@ -145,49 +169,50 @@
   }
   function drawRules() {
     $("rules").innerHTML = cfg.goal > 0
-      ? `🏁 הראשונים ל־<b class="ltr">${fmt(cfg.goal)}</b> מנצחים · 🎁 מתנה = נקודות`
-      : `⏱ המובילים בסוף הזמן מנצחים · 🎁 מתנה = נקודות`;
-    const r = $("rules"); r.style.fontSize = "40px";
-    for (let fs = 40; fs > 28 && r.scrollWidth > r.clientWidth; fs -= 2) r.style.fontSize = fs + "px";
+      ? `🏁 הראשונים ל־<b class="ltr">${fmt(cfg.goal)}</b> מנצחים · 🎁 כל מתנה = נקודה למדינה שלה`
+      : `⏱ המובילים בסוף הזמן מנצחים · 🎁 כל מתנה = נקודה למדינה שלה`;
+    const r = $("rules"); r.style.fontSize = "38px";
+    for (let fs = 38; fs > 26 && r.scrollWidth > r.clientWidth; fs -= 2) r.style.fontSize = fs + "px";
   }
 
   /* ---------- effects ---------- */
   function bump(i, strong) {
-    anim(lanes[i].runner, [{ transform: "translateX(0) scale(1)" }, { transform: `translateX(${strong ? -26 : -12}px) scale(${strong ? 1.12 : 1.05})` }, { transform: "translateX(0) scale(1)" }], { duration: 260, easing: "ease-out" });
-    anim(lanes[i].runner.querySelector(".flame"), [{ opacity: 1 }, { opacity: 0 }], { duration: strong ? 600 : 300, easing: "ease-out" });
-    anim(lanes[i].flash, [{ opacity: 0.5 }, { opacity: 0 }], { duration: 350, easing: "ease-out" });
+    anim(lanes[i].car, [{ transform: "translateX(0) scale(1)" }, { transform: `translateX(${strong ? -22 : -10}px) scale(${strong ? 1.15 : 1.06})` }, { transform: "translateX(0) scale(1)" }], { duration: 260, easing: "ease-out" });
+    anim(lanes[i].car.querySelector(".flame"), [{ opacity: 1 }, { opacity: 0 }], { duration: strong ? 600 : 300, easing: "ease-out" });
+    anim(lanes[i].flash, [{ opacity: 0.4 }, { opacity: 0 }], { duration: 350, easing: "ease-out" });
   }
   function shake(el, amp = 14) {
     anim(el, [{ transform: "translate(0,0)" }, { transform: `translate(${-amp}px,${amp / 2}px)` }, { transform: `translate(${amp - 2}px,${-amp / 2}px)` },
       { transform: `translate(${-amp / 2}px,4px)` }, { transform: "translate(0,0)" }], { duration: 220 });
   }
-  const laneY = (i) => 448 + i * 200 + 138; // centre of the car
-  const runnerX = (i) => 40 + 900 - progress(i) * (900 - CAR_W) - CAR_W / 2;
+  const laneY = (i) => laneTop(i) + LANE_H / 2;
+  const carX = (i) => 40 + ROAD_W - progress(i) * (ROAD_W - CAR_W) - CAR_W / 2;
   let lastFly = 0;
   function flyVote(i) {
     const now = Date.now();
     if (now - lastFly < 200) return;
     lastFly = now;
     const b = document.createElement("div");
-    b.className = "fly-vote"; b.textContent = i + 1; b.style.background = COL[i][0];
-    const x0 = 140 + i * 220, y0 = 1420;
+    b.className = "fly-vote"; b.textContent = i + 1; b.style.background = TEAMS[i].c[0];
+    if (i >= 9) b.style.fontSize = "56px";
+    const x0 = 100 + (i % 5) * 180, y0 = 1420;
     b.style.left = x0 + "px"; b.style.top = y0 + "px";
     $("flyLayer").appendChild(b);
-    const dx = runnerX(i) - 58 - x0, dy = laneY(i) - 58 - y0;
+    const dx = carX(i) - 58 - x0, dy = laneY(i) - 58 - y0;
     anim(b, [{ transform: "translate(0,0) scale(.6)", opacity: 0 }, { transform: "translate(0,-30px) scale(1)", opacity: 1, offset: 0.2 },
-      { transform: `translate(${dx}px,${dy}px) scale(.55)`, opacity: 1, offset: 0.92 }, { transform: `translate(${dx}px,${dy}px) scale(.3)`, opacity: 0 }],
+      { transform: `translate(${dx}px,${dy}px) scale(.45)`, opacity: 1, offset: 0.92 }, { transform: `translate(${dx}px,${dy}px) scale(.3)`, opacity: 0 }],
       { duration: 520, easing: "ease-in" });
     setTimeout(() => b.remove(), 560);
   }
   function flyGift(i, icon) {
-    if (!icon) return;
+    if (!icon) return bump(i, true);
     const img = document.createElement("img");
     img.className = "fly-gift"; img.alt = ""; img.src = icon;
-    img.style.left = "1100px"; img.style.top = laneY(i) - 130 + "px"; img.style.filter = `drop-shadow(0 0 30px ${COL[i][0]})`;
+    img.style.left = "1100px"; img.style.top = laneY(i) - 130 + "px"; img.style.filter = `drop-shadow(0 0 30px ${TEAMS[i].c[0]})`;
     $("flyLayer").appendChild(img);
-    const dx = runnerX(i) - 130 - 1100;
-    anim(img, [{ transform: "translate(0,0) scale(1.3)", opacity: 0 }, { transform: "translate(0,0) scale(1.3)", opacity: 1, offset: 0.15 },
-      { transform: `translate(${dx}px,0) scale(.45)`, opacity: 1, offset: 0.9 }, { transform: `translate(${dx}px,0) scale(.45)`, opacity: 0 }], { duration: 450, easing: "ease-in" });
+    const dx = carX(i) - 130 - 1100;
+    anim(img, [{ transform: "translate(0,0) scale(1)", opacity: 0 }, { transform: "translate(0,0) scale(1)", opacity: 1, offset: 0.15 },
+      { transform: `translate(${dx}px,0) scale(.35)`, opacity: 1, offset: 0.9 }, { transform: `translate(${dx}px,0) scale(.35)`, opacity: 0 }], { duration: 450, easing: "ease-in" });
     setTimeout(() => { img.remove(); bump(i, true); }, 460);
   }
   let tkTimer = null;
@@ -195,10 +220,10 @@
     if (!cfg.takeover) return;
     const t = $("takeover");
     t.className = "abs";
-    t.style.background = `radial-gradient(circle at 50% 45%, ${COL[i][0]}, ${COL[i][1]} 45%, #07031a 80%)`;
+    t.style.background = `radial-gradient(circle at 50% 45%, ${TEAMS[i].c[0]}, ${TEAMS[i].c[1]} 45%, #07031a 80%)`;
     $("tkVal").textContent = "+" + fmt(n);
     $("tkImg").src = icon || ""; $("tkImg").style.visibility = icon ? "visible" : "hidden";
-    $("tkName").textContent = "ל" + cfg.names[i];
+    $("tkName").textContent = "ל" + TEAMS[i].name;
     anim(t, [{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, offset: 0.85 }, { opacity: 0 }], { duration: 950, easing: "linear" });
     anim($("tkImg"), [{ transform: "scale(.3) rotate(-12deg)" }, { transform: "scale(1.12) rotate(0)", offset: 0.25 }, { transform: "scale(1)", offset: 0.7 }, { transform: "translateY(330px) scale(.2)" }], { duration: 950, easing: "ease-out" });
     anim($("tkVal"), [{ transform: "scale(2)" }, { transform: "scale(1)", offset: 0.2 }, { transform: "scale(1)" }], { duration: 950 });
@@ -208,13 +233,14 @@
   let toastTimer = null;
   function toast(html, i, icon) {
     const t = $("btoast");
-    t.style.setProperty("--c", COL[i][1]);
+    t.style.setProperty("--c", TEAMS[i].c[1]);
     t.replaceChildren();
+    if (TEAMS[i].flag) { const f = document.createElement("img"); f.className = "tflag"; f.src = TEAMS[i].flag; f.alt = ""; t.appendChild(f); }
     if (icon) { const img = document.createElement("img"); img.src = icon; img.alt = ""; img.onerror = () => img.remove(); t.appendChild(img); }
     const span = document.createElement("span"); span.innerHTML = html; t.appendChild(span);
     t.classList.add("show");
-    t.style.fontSize = "56px";
-    for (let fs = 56; fs > 32 && t.scrollWidth > t.clientWidth; fs -= 4) t.style.fontSize = fs + "px";
+    t.style.fontSize = "52px";
+    for (let fs = 52; fs > 30 && t.scrollWidth > t.clientWidth; fs -= 4) t.style.fontSize = fs + "px";
     document.body.classList.add("toasting");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => { t.classList.remove("show"); document.body.classList.remove("toasting"); }, 1700);
@@ -230,7 +256,7 @@
     const who = document.createElement("span"); who.className = "who"; who.textContent = user;
     c.append(av, who);
     if (icon) { const img = document.createElement("img"); img.src = icon; img.alt = ""; img.onerror = () => img.remove(); c.appendChild(img); }
-    else { const v = document.createElement("span"); v.className = "v"; v.style.background = COL[i][0]; v.textContent = i + 1; c.appendChild(v); }
+    else { const v = document.createElement("span"); v.className = "v"; v.style.background = TEAMS[i].c[0]; v.textContent = i + 1; if (i >= 9) v.style.fontSize = "32px"; c.appendChild(v); }
     row.prepend(c);
     while (row.children.length > 6) row.lastChild.remove();
   }
@@ -334,21 +360,21 @@
     clearInterval(timer.tickId);
     if (demoId) toggleDemo();
     const max = Math.max(...pts);
-    const tops = [0, 1, 2, 3].filter((i) => pts[i] === max);
-    if (winner === undefined && tops.length === 1) winner = tops[0];
+    const tops = pts.map((p, i) => i).filter((i) => pts[i] === max);
+    if (winner === undefined && tops.length === 1 && max > 0) winner = tops[0];
     const w = $("win");
+    $("winCup").replaceChildren();
     if (winner === undefined) {
       w.style.setProperty("--c", "#8a3dff");
       $("winCup").textContent = "🤝";
       $("winName").textContent = max > 0 ? "תיקו!" : "אין מנצחים";
-      $("winScore").textContent = max > 0 ? tops.map((i) => cfg.names[i]).join(" · ") : "";
+      $("winScore").textContent = max > 0 ? tops.map((i) => TEAMS[i].name).join(" · ") : "";
       $("winMvp").textContent = "";
     } else {
-      w.style.setProperty("--c", COL[winner][0]);
-      const wf = cfg.imgs[winner] || cfg.flags[winner];
-      $("winCup").replaceChildren();
-      if (wf) { const img = document.createElement("img"); img.src = wf; img.alt = ""; $("winCup").appendChild(img); } else $("winCup").textContent = "🏆";
-      $("winName").textContent = `🏆 ${cfg.names[winner]}`;
+      const t = TEAMS[winner];
+      w.style.setProperty("--c", t.c[0]);
+      if (t.flag) { const img = document.createElement("img"); img.src = t.flag; img.alt = ""; $("winCup").appendChild(img); } else $("winCup").textContent = "🏆";
+      $("winName").textContent = `🏆 ${t.name}`;
       $("winScore").innerHTML = `🏁 ראשונים בקו הסיום · <span class="ltr">${fmt(pts[winner])}</span> נקודות`;
       let mvp = null;
       contrib.forEach((c) => { if (c.team === winner && (!mvp || c.pts > mvp.pts)) mvp = c; });
@@ -361,7 +387,7 @@
     clearTimeout(nextId); clearInterval(nextTick);
     if (cfg.next > 0) {
       let left = cfg.next;
-      const show = () => ($("winNext").textContent = `סבב חדש בעוד ${left}`);
+      const show = () => ($("winNext").textContent = `מרוץ חדש בעוד ${left}`);
       show();
       nextTick = setInterval(() => { left = Math.max(0, left - 1); show(); }, 1000);
       nextId = setTimeout(() => { clearInterval(nextTick); reset(); start(); }, cfg.next * 1000);
@@ -370,7 +396,7 @@
 
   /* ---------- scoring ---------- */
   function add(i, n, user, id) {
-    if (i < 0 || i > 3 || round.ended || !(n > 0)) return;
+    if (!(i >= 0 && i < N) || round.ended || !(n > 0)) return;
     pts[i] += n;
     if (id) {
       const c = contrib.get(id) || { name: user || id, team: i, pts: 0 };
@@ -385,9 +411,11 @@
 
   const pick = (...v) => v.find((x) => x !== undefined && x !== null && x !== "");
   const bool = (v) => v === true || v === 1 || v === "1" || String(v).toLowerCase() === "true";
-  const giftIcons = { rose: "images/gifts/rose.png", tiktok: "images/gifts/tiktok.png", "hand heart": "images/gifts/hand-heart.png", confetti: "images/gifts/confetti.png" };
+  const giftIcons = { "hand heart": "images/gifts/hand-heart.png", confetti: "images/gifts/confetti.png" };
+  TEAMS.forEach((t) => t.gifts.forEach((g) => { if (t.giftImg) giftIcons[g] = t.giftImg; }));
+  const giftTeam = (name) => TEAMS.findIndex((t) => t.gifts.includes(name));
 
-  function join(id, user, i) {
+  function join(id, i) {
     if (members.has(id)) return members.get(id);
     members.set(id, i);
     render();
@@ -406,11 +434,12 @@
       const text = String(d.comment || d.text || "").trim().toLowerCase();
       if (cfg.host && text.startsWith("!") && String(pick(d.uniqueId, u.uniqueId) || "").toLowerCase() === cfg.host) return command(text.slice(1));
       const clean = text.replace(/[\s!.?,️⃣]+/g, "");
-      const i = ["1", "2", "3", "4"].indexOf(clean);
-      if (i < 0) return;
+      if (!/^\d{1,2}$/.test(clean)) return;
+      const i = parseInt(clean, 10) - 1;
+      if (i < 0 || i >= N) return;
       if (!open()) return feed(`⏸ ${user}: ${clean} (סבב לא פעיל)`);
-      const team = join(id, user, i);
-      if (team !== i) return feed(`${user} כבר ב${cfg.names[team]}`);
+      const team = join(id, i);
+      if (team !== i) return feed(`${user} כבר ב${TEAMS[team].name}`);
       const now = Date.now();
       if (now - (lastChat.get(id) || 0) < cfg.cooldown) return;
       lastChat.set(id, now);
@@ -424,12 +453,12 @@
       const ext = d.extendedGiftInfo || {};
       const giftType = num(pick(d.giftType, det.giftType, ext.type), 0);
       if (giftType === 1 && !bool(pick(d.repeatEnd, d.repeat_end))) return; // count a streak once, at its end
-      const name = String(pick(d.giftName, det.giftName, d.gift_name, ext.name) || "").toLowerCase();
-      let i = cfg.gifts.findIndex((list) => list.includes(name));
+      const name = giftKey(pick(d.giftName, det.giftName, d.gift_name, ext.name));
+      let i = giftTeam(name);                       // a country's own gift always counts for it
       if (i < 0) i = members.has(id) ? members.get(id) : -1;
-      if (i < 0) return feed(`🎁 ${user}: ${name} (לא בחר קבוצה)`);
+      if (i < 0) return feed(`🎁 ${user}: ${name} (לא בחר מדינה)`);
       if (!open()) return feed(`⏸ 🎁 ${user}: ${name} (סבב לא פעיל)`);
-      join(id, user, i);
+      join(id, i);
       const pic = pick(d.giftPictureUrl, d.giftImageUrl, det.giftPictureUrl, det.giftImage?.giftPictureUrl, ext.image?.url_list?.[0], d.gift?.icon?.url_list?.[0]) || "";
       if (pic && !giftIcons[name]) giftIcons[name] = pic;
       const icon = giftIcons[name] || "";
@@ -437,7 +466,7 @@
       const count = Math.max(1, Math.floor(num(pick(d.repeatCount, d.repeat_count, d.comboCount), 1)));
       const n = Math.max(1, Math.round(each * count * cfg.giftMult));
       chatChip(user, i, icon);
-      toast(`${icon ? "" : "🎁 "}<b class="ltr">+${fmt(n)}</b> ל${esc(cfg.names[i])}`, i, icon);
+      toast(`${icon ? "" : "🎁 "}<b class="ltr">+${fmt(n)}</b> ל${esc(TEAMS[i].name)}`, i, icon);
       flyGift(i, icon);
       if (each >= cfg.bigGift || n >= cfg.bigGift) takeover(i, icon, n);
       add(i, n, user, id);
@@ -465,10 +494,10 @@
 
   /* Commands from the control panel (control.html, same room) or !commands from the host:
      start [m:ss] | pause | resume | toggle | reset | end | timer m:ss | adjust ±sec |
-     goal N | team T N (T = 1-4) | teamsub T N | add a|b N (= team 1|2) | demo            */
+     goal N | team T N (T = 1-10) | teamsub T N | add a|b N (= team 1|2) | demo           */
   function command(text) {
     const [c, x, y] = String(text).trim().toLowerCase().split(/\s+/);
-    const teamOf = (v) => (v === "a" ? 0 : v === "b" ? 1 : Math.min(3, Math.max(0, (parseInt(v, 10) || 1) - 1)));
+    const teamOf = (v) => (v === "a" ? 0 : v === "b" ? 1 : Math.min(N - 1, Math.max(0, (parseInt(v, 10) || 1) - 1)));
     const amount = Math.max(1, parseInt(y, 10) || 1);
     switch (c) {
       case "start": start(x ? parseTime(x) : 0); break;
@@ -479,7 +508,7 @@
       case "end": finish(); break;
       case "timer":
         timer.duration = Math.max(0, parseTime(x || "0"));
-        if (!round.running) { timer.remaining = timer.duration; }
+        if (!round.running) timer.remaining = timer.duration;
         drawClock(); break;
       case "adjust": adjust(parseInt(x, 10) || 0); break;
       case "goal": cfg.goal = Math.max(0, parseInt(x, 10) || 0); drawRules(); render(); drawClock(); break;
@@ -508,16 +537,16 @@
     if (demoId) { clearInterval(demoId); demoId = null; return; }
     if (!open()) start();
     demoId = setInterval(() => {
-      const i = (Math.random() * 4) | 0, who = "fan" + ((Math.random() * 40) | 0), r = Math.random();
+      const i = (Math.random() * N) | 0, who = "fan" + ((Math.random() * 60) | 0), r = Math.random();
       const uid = "demo" + i + "_" + who;
-      if (r < 0.012) handle({ event: "gift", data: { nickname: who, uniqueId: uid, giftName: ["Hand Heart", "Confetti"][i % 2], diamondCount: 100, repeatCount: 1 } });
-      else if (r < 0.07) handle({ event: "gift", data: { nickname: who, uniqueId: uid, giftName: ["Rose", "TikTok"][i % 2], diamondCount: 1, repeatCount: 1 + ((Math.random() * 5) | 0) } });
+      if (r < 0.01) handle({ event: "gift", data: { nickname: who, uniqueId: uid, giftName: "Hand Heart", diamondCount: 100, repeatCount: 1 } });
+      else if (r < 0.12 && TEAMS[i].giftLabel) handle({ event: "gift", data: { nickname: who, uniqueId: uid, giftName: TEAMS[i].giftLabel, diamondCount: 1, repeatCount: 1 + ((Math.random() * 5) | 0) } });
       else handle({ event: "chat", data: { nickname: who, uniqueId: uid, comment: String(i + 1) } });
-    }, 160);
+    }, 140);
   }
   addEventListener("keydown", (e) => {
-    const k = ["Digit1", "Digit2", "Digit3", "Digit4"].indexOf(e.code);
-    if (k >= 0) add(k, e.shiftKey ? 10 : 1);
+    const m = /^Digit(\d)$/.exec(e.code);
+    if (m) { const i = m[1] === "0" ? 9 : parseInt(m[1], 10) - 1; if (i < N) add(i, e.shiftKey ? 10 : 1); }
     else if (e.key === "r" || e.key === "R") reset();
     else if (e.key === "t" || e.key === "T") { reset(); start(); }
     else if (e.key === "d" || e.key === "D") toggleDemo();
@@ -526,7 +555,7 @@
     else if (e.code === "BracketRight") adjust(e.shiftKey ? 60 : 15);
   });
 
-  window.Battle = { add, reset, start, finish, handle, command, pts, members };
+  window.Battle = { add, reset, start, finish, handle, command, pts, members, teams: TEAMS };
 
   drawRules(); render(); drawClock();
   if (P.get("autostart") !== "0") start();
