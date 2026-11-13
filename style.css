@@ -112,6 +112,7 @@ body.toasting .gift-tag, body.ended .gift-tag { opacity: 0; }
   font-size: 36px; font-weight: 800; white-space: nowrap; overflow: hidden; background: rgba(12,10,40,.72); border: 3px solid rgba(255,211,77,.65);
   transition: opacity .25s; padding: 0 26px; }
 #thanks b { color: #ffd34d; }
+#thanks .rimg { width: 60px; height: 60px; object-fit: contain; flex: none; }
 #thanks .nm { max-width: 230px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: bottom; }
 body.toasting #thanks, body.ended #thanks { opacity: 0; }
 

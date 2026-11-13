@@ -465,6 +465,19 @@
     () => `🗳️ כתבו 1 ל${cfg.left} או 2 ל${cfg.right}`,
     () => timer.duration > 0 ? `⏱ סבב של ${Math.round(timer.duration / 60) || 1} דקות, ואז מכריזים מנצח` : "🏆 מי שמוביל בסוף מנצח",
     () => "💬 אפשר להצביע שוב כל כמה שניות",
+    // which gift goes to which side, with the gift pictures (once a minute: one of 4 rotating reminders)
+    () => {
+      const parts = [];
+      [["a", cfg.giftA[0]], ["b", cfg.giftB[0]]].forEach(([side, g], k) => {
+        if (!g) return;
+        if (parts.length) parts.push("  ·  ");
+        const url = giftIcon(g);
+        if (url) { const img = document.createElement("img"); img.className = "rimg"; img.src = url; img.alt = g; parts.push(img); }
+        else parts.push("🎁 " + g + " ");
+        parts.push("ל" + sideName(side));
+      });
+      return parts.length ? parts : "💬 אפשר להצביע שוב כל כמה שניות";
+    },
   ];
   let ruleIdx = -1, ruleUntil = 0;
   if (P.get("rules") !== "0") setInterval(() => { ruleIdx++; ruleUntil = Date.now() + 5000; drawThanks(); setTimeout(drawThanks, 5100); }, 15000);
@@ -474,7 +487,8 @@
     if (Date.now() < infoUntil) {
       el.append("🎁 מתנות נספרות כנקודות לצד שבחרתם");
     } else if (Date.now() < ruleUntil) {
-      el.append(RULES[ruleIdx % RULES.length]());
+      const r = RULES[ruleIdx % RULES.length]();
+      if (Array.isArray(r)) el.append(...r); else el.append(r);
     } else {
       const top = [...supporters.values()].sort((x, y) => y.n - x.n).slice(0, 3);
       if (!top.length) { el.classList.add("hidden"); return; } // nothing to show between reminders
