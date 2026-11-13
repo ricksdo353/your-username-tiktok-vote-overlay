@@ -152,6 +152,9 @@
     <label>שם החדר של המרוץ
       <input id="room" class="room" />
     </label>
+    <label>כבר שמת קישור מרוץ ב-LIVE Studio? הדבק אותו כאן והלוח יעבור לחדר שלו:
+      <textarea id="raceIn" placeholder="https://…/battle.html?room=…"></textarea>
+    </label>
     <label>הקישור לשים ב-LIVE Studio (כבר עם החדר):
       <textarea id="raceOut" readonly></textarea>
     </label>
@@ -187,6 +190,14 @@
     buildRace();
   });
 
+  $("raceIn").addEventListener("input", () => {
+    try {
+      const linked = (new URL($("raceIn").value.trim()).searchParams.get("room") || "").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+      if (!linked) return toast("בקישור הזה אין חדר", true);
+      room = linked; $("room").value = room; store.set("tvr-room", room); buildRace();
+      toast("החדר נלקח מהקישור ✓");
+    } catch (_) { if ($("raceIn").value.trim()) toast("הקישור לא תקין", true); }
+  });
   function raceLink(he) {
     const u = new URL("battle.html", location.href);
     u.search = "";

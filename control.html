@@ -133,7 +133,7 @@
     <label>שם החדר (חייב להיות זהה ב-overlay ובלוח)
       <input id="room" class="room" />
     </label>
-    <label>הדבק כאן את קישור ה-overlay שלך:
+    <label>הדבק כאן את קישור ה-overlay שלך (אם הוא כבר ב-LIVE Studio, הדבק את אותו קישור והחדר ייקלט ממנו):
       <textarea id="overlayIn" placeholder="https://…github.io/…/?left=…"></textarea>
     </label>
     <label>הקישור לשים ב-LIVE Studio (עם החדר):
@@ -186,6 +186,12 @@
     if (!raw) { $("overlayOut").value = ""; return; }
     try {
       const u = new URL(raw);
+      // a link that already has a room (the one in LIVE Studio) wins: use that room here too
+      const linked = (u.searchParams.get("room") || "").toLowerCase().replace(/[^a-z0-9_-]/g, "");
+      if (linked && linked !== room) {
+        room = linked; $("room").value = room; store.set("tvo-room", room);
+        setTimeout(() => toast("החדר נלקח מהקישור ✓"), 0);
+      }
       u.searchParams.set("room", room);
       if (P.get("ctrl")) u.searchParams.set("ctrl", CTRL);
       $("overlayOut").value = u.toString();
