@@ -526,7 +526,7 @@
     ws.onerror = () => ws.close();
   }
 
-  /* Commands from the control panel (control.html, same room) or !commands from the host:
+  /* Commands from the race control panel (race-control.html, same room; its own channel, tvr-) or !commands from the host:
      start [m:ss] | pause | resume | toggle | reset | end | timer m:ss | adjust ±sec |
      goal N | team T N (T = 1-10) | teamsub T N | add a|b N (= team 1|2) | demo           */
   function command(text) {
@@ -561,7 +561,7 @@
   function listenControl() {
     if (!cfg.room) return setCtrl(null);
     const seen = new Set();
-    const es = new EventSource(`${cfg.ctrl}/tvo-${encodeURIComponent(cfg.room)}/sse`);
+    const es = new EventSource(`${cfg.ctrl}/tvr-${encodeURIComponent(cfg.room)}/sse`);
     es.onopen = () => setCtrl(true);
     es.onerror = () => setCtrl(false);
     es.onmessage = (e) => {

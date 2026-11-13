@@ -368,15 +368,17 @@ Add settings to the end of the link, starting with `?` and joined with `&`. Exam
 | `next` | `next=30` | Seconds the winner is shown before a new race (default `15`, `next=0` = off) |
 | `likes` | `likes=0` | Points per like (default `0.1`; `0` turns likes off) |
 | `chat` | `chat=0` | Points per comment (default `1`; `0` = comments only pick a country) |
-| `room` | `room=yourroom` | Control panel room (same as the vote board) |
+| `room` | `room=yourroom` | Race control panel room (set for you by race-control.html) |
 
-**Control panel:** the race only listens to the panel when its link has your room in it.
-Open the control panel, and in the "חיבור ל-overlay" section copy the **🏎️ race link**
-(English or Hebrew button). It already contains your room. Put that link in LIVE Studio.
-At the bottom of the board, **🎮 ✓** means it is connected to the panel (**🎮 ✗ no room** = the link has no room). Start / pause / reset / end and the time buttons work the same.
-The **🏎️ מרוץ מדינות** section has +10 / −10 for each country and goal presets.
-If the vote board and the race are both open with the same room, a button controls both,
-so use one board at a time (or give them different rooms).
+**Race control panel** (separate from the vote board's panel, with its own room, so the two never control each other):
+
+```
+https://ricksdo353.github.io/your-username-tiktok-vote-overlay/race-control.html
+```
+
+Open it on your phone, copy the race link from its "🔗 חיבור למרוץ" section (English or Hebrew button) and put that
+link in LIVE Studio. It already contains the race room. At the bottom of the race, **🎮 ✓** means it is connected
+(**🎮 ✗ no room** = the link has no room). The panel has start / pause / end / reset, goal presets, +10 / −10 per country and an optional timer.
 
 **Keyboard:** `1`–`9` and `0` (= 10) = +1 (Shift = +10), `T` = new race, `Space` = pause, `R` = reset, `D` = demo.
 Try it in a browser with `battle.html?preview=1&demo=1`.
@@ -525,7 +527,8 @@ On GitHub Pages, changes can take ~1 minute to appear.
 | `index.html` | The overlay page |
 | `battle.html` · `battle.css` · `battle.js` | Country car race board (10 countries) |
 | `images/flags/` | Country flags (flag-icons, MIT) |
-| `control.html` | Remote control panel (phone / browser) |
+| `control.html` | Remote control panel for the vote board (phone / browser) |
+| `race-control.html` | Remote control panel for the country race |
 | `style.css` | Colors, layout, animations |
 | `fonts/` | Heebo Hebrew font (SIL Open Font License) |
 | `script.js` | Voting, timer, TikTok connection |

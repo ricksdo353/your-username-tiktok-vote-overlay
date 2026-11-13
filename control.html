@@ -127,43 +127,6 @@
     <button data-cmd="demo">🧪 מצב דמו (הפעל / כבה)</button>
   </section>
 
-  <!-- Country race (battle.html) -->
-  <section>
-    <h2>🏎️ מרוץ מדינות (battle.html)</h2>
-    <div class="grid5">
-      <button style="background:#2f8bff" data-cmd="team 1 10">1 ישראל <bdi dir="ltr">+10</bdi></button>
-      <button style="background:#1fa055" data-cmd="team 2 10">2 פלסטין <bdi dir="ltr">+10</bdi></button>
-      <button style="background:#e0283c" data-cmd="team 3 10">3 ארה״ב <bdi dir="ltr">+10</bdi></button>
-      <button style="background:#ff8a1f" data-cmd="team 4 10">4 איראן <bdi dir="ltr">+10</bdi></button>
-      <button style="background:#6a5cff" data-cmd="team 5 10">5 רוסיה <bdi dir="ltr">+10</bdi></button>
-      <button style="background:#9c7c00" data-cmd="team 6 10">6 אוקראינה <bdi dir="ltr">+10</bdi></button>
-      <button style="background:#c2185b" data-cmd="team 7 10">7 מרוקו <bdi dir="ltr">+10</bdi></button>
-      <button style="background:#b8862b" data-cmd="team 8 10">8 מצרים <bdi dir="ltr">+10</bdi></button>
-      <button style="background:#ff5c8a" data-cmd="team 9 10">9 טורקיה <bdi dir="ltr">+10</bdi></button>
-      <button style="background:#12a5a0" data-cmd="team 10 10">10 סעודיה <bdi dir="ltr">+10</bdi></button>
-    </div>
-    <div class="grid5">
-      <button data-cmd="teamsub 1 10">ישראל <bdi dir="ltr">−10</bdi></button>
-      <button data-cmd="teamsub 2 10">פלסטין <bdi dir="ltr">−10</bdi></button>
-      <button data-cmd="teamsub 3 10">ארה״ב <bdi dir="ltr">−10</bdi></button>
-      <button data-cmd="teamsub 4 10">איראן <bdi dir="ltr">−10</bdi></button>
-      <button data-cmd="teamsub 5 10">רוסיה <bdi dir="ltr">−10</bdi></button>
-      <button data-cmd="teamsub 6 10">אוקראינה <bdi dir="ltr">−10</bdi></button>
-      <button data-cmd="teamsub 7 10">מרוקו <bdi dir="ltr">−10</bdi></button>
-      <button data-cmd="teamsub 8 10">מצרים <bdi dir="ltr">−10</bdi></button>
-      <button data-cmd="teamsub 9 10">טורקיה <bdi dir="ltr">−10</bdi></button>
-      <button data-cmd="teamsub 10 10">סעודיה <bdi dir="ltr">−10</bdi></button>
-    </div>
-    <div class="presets">
-      <button data-cmd="goal 300">יעד 300</button>
-      <button data-cmd="goal 500">יעד 500</button>
-      <button data-cmd="goal 1000">יעד 1,000</button>
-      <button data-cmd="goal 2000">יעד 2,000</button>
-      <button data-cmd="goal 5000">יעד 5,000</button>
-    </div>
-    <small>כפתורי הסבב והזמן למעלה עובדים גם במרוץ.</small>
-  </section>
-
   <!-- Connection -->
   <section>
     <h2>🔗 חיבור ל-overlay</h2>
@@ -181,14 +144,7 @@
       <button id="copyPanel">📱 העתק קישור ללוח הזה</button>
     </div>
     <small>הקישור ללוח מתאים לפתיחה בטלפון. כל מי שיש לו את שם החדר יכול לשלוט, אז אל תפרסם אותו.</small>
-    <label>🏎️ הקישור למרוץ המדינות (כבר עם החדר שלך, לשים ב-LIVE Studio):
-      <textarea id="raceOut" readonly></textarea>
-    </label>
-    <div class="row">
-      <button id="copyRace">📋 העתק קישור מרוץ (English)</button>
-      <button id="copyRaceHe">📋 העתק קישור מרוץ (עברית)</button>
-    </div>
-    <small>בתחתית הלוח עצמו יופיע "🎮 ✓" כשהוא מחובר ללוח הבקרה.</small>
+    <small>בתחתית הלוח עצמו יופיע "🎮 ✓" כשהוא מחובר ללוח הבקרה. למרוץ המדינות יש לוח שליטה נפרד: <a href="race-control.html" style="color:#c4b0ff">race-control.html</a></small>
   </section>
 </main>
 <div id="toast"></div>
@@ -241,19 +197,6 @@
   $("overlayIn").addEventListener("input", buildLinks);
   buildLinks();
 
-  // race board link (battle.html next to this page) with the room already in it
-  function raceLink(he) {
-    const u = new URL("battle.html", location.href);
-    u.search = "";
-    u.searchParams.set("room", room);
-    if (he) u.searchParams.set("lang", "he");
-    if (P.get("ctrl")) u.searchParams.set("ctrl", CTRL);
-    return u.toString();
-  }
-  function buildRace() { $("raceOut").value = room ? raceLink(false) : "⚠ חסר שם חדר"; }
-  buildRace();
-  $("room").addEventListener("input", buildRace);
-
   function panelLink() {
     const u = new URL(location.href);
     u.search = "";
@@ -287,8 +230,6 @@
   $("copyOverlay").onclick = () => $("overlayOut").value && !$("overlayOut").value.startsWith("⚠")
     ? copy($("overlayOut").value) : toast("קודם הדבק את קישור ה-overlay", true);
   $("copyPanel").onclick = () => copy(panelLink());
-  $("copyRace").onclick = () => (room ? copy(raceLink(false)) : toast("חסר שם חדר", true));
-  $("copyRaceHe").onclick = () => (room ? copy(raceLink(true)) : toast("חסר שם חדר", true));
 
   // ----- send commands -----
   async function send(cmd) {
