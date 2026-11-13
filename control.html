@@ -155,8 +155,8 @@
 </main>
 <div id="toast"></div>
 
-<script src="lib/mqtt.min.js?v=202611131247"></script>
-<script src="relay.js?v=202611131247"></script>
+<script src="lib/mqtt.min.js?v=202611131252"></script>
+<script src="relay.js?v=202611131252"></script>
 <script>
 (() => {
   const P = new URLSearchParams(location.search);
@@ -188,7 +188,7 @@
 
   // ----- links -----
   $("overlayIn").value = P.get("overlay") || store.get("tvo-overlay") || "";
-  function buildLinks() {
+  function buildLinks(fromPaste) {
     const raw = $("overlayIn").value.trim();
     store.set("tvo-overlay", raw);
     if (!raw) { $("overlayOut").value = ""; return; }
@@ -196,7 +196,8 @@
       const u = new URL(raw);
       // a link that already has a room (the one in LIVE Studio) wins: use that room here too
       const linked = (u.searchParams.get("room") || "").toLowerCase().replace(/[^a-z0-9_-]/g, "");
-      if (linked && linked !== room) {
+      // (a room given in this panel's own link always wins over an old saved link)
+      if (linked && linked !== room && (fromPaste === true || !P.get("room"))) {
         room = linked; $("room").value = room; store.set("tvo-room", room);
         setTimeout(() => toast("החדר נלקח מהקישור ✓"), 0);
       }
@@ -208,7 +209,7 @@
       $("overlayOut").value = "⚠ הקישור לא תקין";
     }
   }
-  $("overlayIn").addEventListener("input", buildLinks);
+  $("overlayIn").addEventListener("input", () => buildLinks(true));
   buildLinks();
 
   function panelLink() {

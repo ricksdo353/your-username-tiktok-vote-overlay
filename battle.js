@@ -555,7 +555,8 @@
   function setCtrl(ok) {
     let el = document.getElementById("ctrlStat");
     if (!el) { el = document.createElement("div"); el.id = "ctrlStat"; el.className = "abs"; document.getElementById("stage").appendChild(el); }
-    el.textContent = ok === null ? "🎮 ✗ no room" : ok ? "🎮 ✓" : "🎮 …";
+    const tail = cfg.room ? " …" + cfg.room.slice(-3) : "";
+    el.textContent = ok === null ? "🎮 ✗ no room" : (ok ? "🎮 ✓" : "🎮 …") + tail;
     el.classList.toggle("on", ok === true);
   }
   function listenControl() {
