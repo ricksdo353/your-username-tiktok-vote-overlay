@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="he">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TikTok LIVE Team Battle</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="battle.css" />
+</head>
+<body>
+  <div id="stage">
+    <!-- same background as the vote board -->
+    <div id="bgfx" class="abs">
+      <div class="base"></div>
+      <div class="grid"></div>
+      <div class="glow glow-a"></div><div class="glow glow-b"></div>
+      <div class="streaks"><div class="streak s1"></div><div class="streak s2"></div><div class="streak s3"></div></div>
+      <div id="dots"></div>
+      <div class="vignette"></div>
+    </div>
+    <div id="panel" class="abs"></div>
+
+    <div id="ticker" class="abs"><div id="tickerRow0" class="tk-row"></div><div id="tickerRow1" class="tk-row"></div></div>
+    <div id="tickerFade" class="abs"></div>
+
+    <div id="dash" class="abs">
+      <div id="header" class="abs">
+        <h1 id="title" class="abs he center hdr">קרב <span class="grad">קבוצות</span></h1>
+        <h1 id="hint" class="abs he center hdr off">כתבו <span class="grad ltr">1 · 2 · 3 · 4</span></h1>
+      </div>
+      <div id="clock" class="abs pill"><div id="clockRed" class="abs"></div><span id="clockText">1,000</span></div>
+      <div id="lanes" class="abs"></div>
+      <div id="rules" class="abs he center"></div>
+      <div id="btoast" class="abs he"></div>
+    </div>
+
+    <div id="flyLayer" class="abs"></div>
+    <div id="takeover" class="abs">
+      <div id="tkVal" class="abs gold">+100</div>
+      <img id="tkImg" class="abs" alt="" />
+      <div id="tkName" class="abs he"></div>
+    </div>
+    <div id="dim" class="abs"></div>
+    <div id="countdown" class="abs">3</div>
+
+    <div id="win" class="abs hidden">
+      <div id="winGlow" class="abs"></div>
+      <div id="winCup" class="abs">🏆</div>
+      <div id="winName" class="abs he center"></div>
+      <div id="winScore" class="abs he center"></div>
+      <div id="winMvp" class="abs he center"></div>
+      <div id="winNext" class="abs he center"></div>
+    </div>
+
+    <div id="feed" class="abs"></div>
+    <div id="status" class="abs">offline</div>
+  </div>
+
+  <script src="battle.js"></script>
+</body>
+</html>

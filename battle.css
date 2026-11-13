@@ -1,0 +1,64 @@
+/* Team battle board. Shares fonts, background, ticker and effects with style.css.
+   1080x1920 stage; everything readable sits inside TikTok's safe area (y 168-1330, x < 960 low down). */
+
+#title, #hint { font-size: 86px; }
+#clock { left: 300px; top: 280px; width: 480px; height: 130px; font-size: 104px; font-variant-numeric: tabular-nums; direction: ltr;
+  background: linear-gradient(90deg, #1456c9, #5a1fd6); border: 6px solid #fff; text-shadow: 0 3px 12px rgba(0,0,0,.6);
+  box-shadow: 0 0 50px rgba(138,61,255,.7); overflow: hidden; }
+#clock.goal { font-size: 64px; }
+#clockRed { inset: 0; border-radius: 999px; background: linear-gradient(90deg, #ff2d55, #ff7a2d); opacity: 0; transition: opacity .25s; }
+#clockText { position: relative; }
+#clock.urgent #clockRed, #clock.done #clockRed { opacity: 1; }
+#clock.urgent { animation: pulse .4s ease-in-out infinite alternate; }
+#clock.paused { opacity: .55; }
+
+/* four lanes, top to bottom */
+#lanes { left: 40px; top: 448px; width: 900px; height: 800px; }
+.lane { position: absolute; left: 0; width: 900px; height: 184px; }
+.lane .badge { position: absolute; right: 0; top: 0; width: 84px; height: 84px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 56px; font-weight: 900; border: 5px solid #fff; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.4); }
+.lane .crown { position: absolute; right: 18px; top: -46px; font-size: 52px; opacity: 0; transform: scale(.4); transition: opacity .25s, transform .3s cubic-bezier(.3,1.6,.5,1); }
+.lane.lead .crown { opacity: 1; transform: none; }
+.lane .tname { position: absolute; right: 104px; top: 2px; width: 470px; font-size: 52px; font-weight: 900; line-height: 80px; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis; direction: rtl; text-shadow: 0 3px 12px rgba(0,0,0,.7); }
+.lane .members { position: absolute; left: 230px; top: 14px; height: 56px; padding: 0 18px; border-radius: 28px; background: rgba(255,255,255,.1);
+  display: flex; align-items: center; gap: 8px; font-size: 32px; font-weight: 800; direction: ltr; }
+.lane .pts { position: absolute; left: 0; top: 0; width: 220px; text-align: left; font-size: 72px; font-weight: 900; line-height: 84px;
+  font-variant-numeric: tabular-nums; direction: ltr; text-shadow: 0 0 26px var(--c), 0 4px 12px rgba(0,0,0,.7); }
+.lane .track { position: absolute; left: 0; top: 96px; width: 900px; height: 76px; border-radius: 38px; background: rgba(255,255,255,.07);
+  border: 4px solid rgba(255,255,255,.22); overflow: hidden; }
+.lane .fill { position: absolute; right: 0; top: 0; height: 100%; width: 0; border-radius: 38px;
+  background: linear-gradient(270deg, var(--c2), var(--c)); transition: width .45s cubic-bezier(.2,.9,.3,1.1); box-shadow: 0 0 30px var(--c); }
+.lane .flash { position: absolute; inset: 0; background: #fff; opacity: 0; }
+.lane .finish { position: absolute; left: 0; top: 0; width: 34px; height: 100%;
+  background: repeating-conic-gradient(#fff 0 25%, #111 0 50%) 0 0 / 17px 17px; opacity: .85; }
+.lane .runner { position: absolute; top: 82px; width: 104px; height: 104px; border-radius: 50%; border: 6px solid #fff; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; font-size: 56px; font-weight: 900; background: var(--c);
+  box-shadow: 0 0 34px var(--c); transition: right .45s cubic-bezier(.2,.9,.3,1.1); }
+.lane .runner img { width: 100%; height: 100%; object-fit: cover; }
+.lane.hot .track { border-color: #fff; animation: hot .5s ease-in-out infinite alternate; }
+
+#rules { left: 40px; top: 1266px; width: 900px; font-size: 40px; white-space: nowrap; font-weight: 800; line-height: 1.2; color: rgba(255,255,255,.88);
+  transition: opacity .2s; text-shadow: 0 3px 10px rgba(0,0,0,.7); }
+#rules b { color: #ffd34d; }
+body.toasting #rules { opacity: 0; }
+#btoast { left: 130px; top: 1236px; width: 760px; height: 112px; border-radius: 56px; display: flex; align-items: center; justify-content: center; gap: 20px;
+  font-size: 56px; font-weight: 900; opacity: 0; border: 5px solid #fff; transform: translateY(60px) scale(.8); white-space: nowrap;
+  transition: opacity .16s, transform .2s cubic-bezier(.3,1.6,.5,1); background: var(--c); box-shadow: 0 0 50px var(--c); }
+#btoast.show { opacity: 1; transform: none; }
+#btoast img { width: 92px; height: 92px; object-fit: contain; }
+#btoast b { color: #ffd34d; }
+
+/* winner screen */
+#win { inset: 0; background: rgba(5,2,26,.93); }
+#winGlow { left: -260px; top: 220px; width: 1600px; height: 1300px; border-radius: 50%; background: radial-gradient(circle, var(--c) 0%, transparent 62%); opacity: .7; }
+#winCup { left: 0; top: 330px; width: 1080px; text-align: center; font-size: 260px; line-height: 1; }
+#winName { left: 0; top: 640px; width: 1080px; font-size: 120px; font-weight: 900; line-height: 1.1; text-shadow: 0 0 50px var(--c), 0 6px 20px rgba(0,0,0,.7); }
+#winScore { left: 0; top: 800px; width: 1080px; font-size: 64px; font-weight: 800; color: #ffd34d; }
+#winMvp { left: 90px; top: 920px; width: 900px; font-size: 52px; font-weight: 800; line-height: 1.3; }
+#winNext { left: 0; top: 1150px; width: 1080px; font-size: 44px; font-weight: 700; opacity: .8; }
+#win.show #winName { animation: slam .3s cubic-bezier(.6,0,1,1); }
+#win.show #winCup { animation: slam .3s cubic-bezier(.6,0,1,1); }
+
+.chip .v { color: #fff; }
+@keyframes hot { to { box-shadow: 0 0 40px var(--c); } }

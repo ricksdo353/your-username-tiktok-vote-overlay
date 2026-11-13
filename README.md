@@ -22,6 +22,9 @@ Viewers comment **1** or **2** to vote, gifts give bonus votes, and a timer anno
 **Ready-made link**
 - [🇮🇱 נתניהו נגד איזנקוט](#-ready-made-נתניהו-נגד-איזנקוט)
 
+**Second board**
+- [🏁 Team battle (4 teams)](#-team-battle-4-teams)
+
 **Using it**
 - [🎮 Control panel](#-control-panel)
 - [✅ Every-stream checklist](#-every-stream-checklist)
@@ -313,6 +316,53 @@ your own LIVE chat:
 
 ---
 
+# 🏁 Team battle (4 teams)
+
+A second board with its own link: **`battle.html`**. It connects to TikTok exactly like the vote board
+(TikFinity or `server.js`, Steps 5–6), and uses the same control panel.
+
+**How viewers play**
+1. A viewer comments **1**, **2**, **3** or **4** to join that team (they stay in it until the round ends).
+2. Every comment of their team number = **+1** point (once every 2 seconds per viewer).
+3. Their gifts go to their team: **1 coin = 1 point**. Their likes help too (10 likes = 1 point).
+4. Each team's runner moves toward the finish line. The first team to the goal (default **1,000**) wins.
+5. The winner and the team's MVP (who gave the most points) are shown, and after 15 seconds
+   a new round starts by itself. Everyone can pick a team again.
+
+**Link** (paste into TikTok LIVE Studio → Sources → Link, 1080×1920):
+
+```
+https://ricksdo353.github.io/your-username-tiktok-vote-overlay/battle.html
+```
+
+Add settings to the end of the link, starting with `?` and joined with `&`. Examples:
+
+| Setting | Example | What it does |
+|---|---|---|
+| `t1`…`t4` | `t1=Real Madrid` | Team names (default הכחולים, הסגולים, הורודים, הצהובים) |
+| `img1`…`img4` | `img1=images/netanyahu.jpg` | Picture on a team's runner (default: its number) |
+| `goal` | `goal=500` | Points to win (`goal=0` = no goal, the timer decides) |
+| `timer` | `timer=5:00` | Round length; when it hits 0 the leading team wins (default: no timer) |
+| `next` | `next=30` | Seconds the winner is shown before a new round (default `15`, `next=0` = off) |
+| `likes` | `likes=0` | Points per like (default `0.1`; `0` turns likes off) |
+| `chat` | `chat=0` | Points per comment (default `1`; `0` = comments only pick a team) |
+| `gift1`…`gift4` | `gift1=Rose` | A gift that always counts for that team, even from viewers with no team |
+| `room` | `room=yourroom` | Control panel room (same as the vote board) |
+
+Example with a 5-minute timer and a goal of 2,000:
+`https://ricksdo353.github.io/your-username-tiktok-vote-overlay/battle.html?goal=2000&timer=5:00`
+
+**Control panel:** paste the battle link into the panel's "חיבור ל-overlay" box to add your room,
+exactly like the vote board. Start / pause / reset / end and the time buttons work the same.
+The **🏁 קרב קבוצות** section has +10 / −10 per team and goal presets.
+If the vote board and the battle board are both open with the same room, a button controls both,
+so use one board at a time (or give them different rooms).
+
+**Keyboard:** `1`–`4` = +1 (Shift = +10), `T` = new round, `Space` = pause, `R` = reset, `D` = demo.
+Try it in a browser with `battle.html?preview=1&demo=1`.
+
+---
+
 # ✅ Every-stream checklist
 
 1. ☐ Go LIVE on TikTok.
@@ -450,6 +500,7 @@ On GitHub Pages, changes can take ~1 minute to appear.
 | File | What it is |
 |---|---|
 | `index.html` | The overlay page |
+| `battle.html` · `battle.css` · `battle.js` | Team battle board (4 teams) |
 | `control.html` | Remote control panel (phone / browser) |
 | `style.css` | Colors, layout, animations |
 | `fonts/` | Heebo Hebrew font (SIL Open Font License) |
