@@ -520,6 +520,7 @@
       flyGift(i, icon);
       if (each >= cfg.bigGift || n >= cfg.bigGift) takeover(i, icon, n);
       add(i, n, user, id);
+      if (cfg.room && window.Relay) window.Relay.notify("tvr-" + cfg.room, { type: "gift", user, gift: String(pick(d.giftName, det.giftName, d.gift_name, ext.name) || name), n, side: TEAMS[i].name });
       if (P.get("thanks") !== "0") { const s = giftCoins.get(id) || { name: user, n: 0 }; s.n += n; s.name = user || s.name; giftCoins.set(id, s); }
     }
 

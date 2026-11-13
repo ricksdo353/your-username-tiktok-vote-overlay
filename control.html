@@ -71,6 +71,15 @@
     .bstat.bad { background: #4a1426; border-color: #ff4d6d; }
     .bstat.wait { background: #2a2360; }
     .bstat small { display: block; font-weight: 500; margin-top: 4px; color: #e6e1ff; }
+    .glog { display: grid; gap: 6px; max-height: 320px; overflow-y: auto; }
+    .gempty { color: var(--muted); font-size: 14px; text-align: center; padding: 8px; }
+    .gitem { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; background: #0e0b2a; border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; }
+    .gitem.done { opacity: .45; }
+    .gitem .who { font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .gitem .what { font-size: 13px; color: var(--muted); }
+    .gitem button { min-height: 40px; padding: 6px 14px; }
+    details summary { cursor: pointer; list-style: none; }
+    .tips { margin: 10px 0 0; padding-inline-start: 20px; display: grid; gap: 8px; font-size: 14px; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -133,6 +142,28 @@
     <button data-cmd="demo">🧪 מצב דמו (הפעל / כבה)</button>
   </section>
 
+  <!-- Gifts to thank -->
+  <section>
+    <h2>🙏 מי לתת תודה (מתנות בזמן אמת)</h2>
+    <div id="giftLog" class="glog"><div class="gempty">עוד לא הגיעו מתנות. כל מתנה תופיע כאן מיד, עם השם, כדי שתוכל להגיד תודה בקול.</div></div>
+    <small>תגיד תודה בשם ("תודה לדנה על הוורד!"). זה מעודד אחרים בלי לבקש מתנות. לחץ ✓ אחרי שהודית.</small>
+  </section>
+
+  <!-- Safe LIVE tips -->
+  <section>
+    <details>
+      <summary><h2 style="display:inline">🛡️ איך לא לקבל הגבלה מטיקטוק</h2></summary>
+      <ul class="tips">
+        <li><b>אל תבקש מתנות שוב ושוב</b> ("שלחו ורדים!" כל כמה דקות). זה בדיוק "inorganic gift solicitation".</li>
+        <li><b>אל תבטיח משהו תמורת מתנות</b> ("ב־1,000 מטבעות אני עושה...") ואל תלחץ רגשית.</li>
+        <li><b>כן: תודה בשם</b> למי ששלח. הרשימה למעלה עוזרת.</li>
+        <li><b>יעד מתנות רשמי (LIVE Goal):</b> אם יש לך את האפשרות, אפשר להגדיר יעד דרך כלי הלייב של טיקטוק לפני העלייה ללייב. טיקטוק מציגים אותו בעצמם, אז זה לא נחשב לחץ. אם אתה לא מוצא אותו, הוא לא זמין עדיין בחשבון שלך.</li>
+        <li>הלוח כבר בנוי ככה: הוא מסביר פעם אחת בתחילת סבב ש"מתנות נספרות", ומודה ל־3 התומכים המובילים.</li>
+        <li>קיבלת הגבלה? לחץ OK. היא נגמרת לבד. אם זו טעות, אפשר Appeal. בדוק ב־Settings and privacy → Account status.</li>
+      </ul>
+    </details>
+  </section>
+
   <!-- Connection -->
   <section>
     <h2>🔗 חיבור ל-overlay</h2>
@@ -155,8 +186,8 @@
 </main>
 <div id="toast"></div>
 
-<script src="lib/mqtt.min.js?v=202611131333"></script>
-<script src="relay.js?v=202611131333"></script>
+<script src="lib/mqtt.min.js?v=202611131336"></script>
+<script src="relay.js?v=202611131336"></script>
 <script>
 (() => {
   const P = new URLSearchParams(location.search);
@@ -247,6 +278,31 @@
   $("copyPanel").onclick = () => copy(panelLink());
 
   // ----- send commands -----
+  // ----- gifts to thank (the board reports each gift) -----
+  const giftLog = [];
+  function onBoardEvent(e) {
+    if (e.type !== "gift") return;
+    giftLog.unshift(e); if (giftLog.length > 30) giftLog.pop();
+    drawGiftLog();
+  }
+  function drawGiftLog() {
+    const box = $("giftLog");
+    box.replaceChildren();
+    giftLog.forEach((e) => {
+      const row = document.createElement("div"); row.className = "gitem" + (e.done ? " done" : "");
+      const info = document.createElement("div");
+      const who = document.createElement("div"); who.className = "who"; who.textContent = e.user || "צופה";
+      const what = document.createElement("div"); what.className = "what";
+      what.textContent = `${e.gift || "מתנה"} · +${e.n || 1} ל${e.side || ""} · ${new Date(e.t || Date.now()).toLocaleTimeString("he-IL", { hour: "2-digit", minute: "2-digit" })}`;
+      info.append(who, what);
+      const b = document.createElement("button"); b.textContent = e.done ? "✓ הודיתי" : "✓";
+      b.onclick = () => { e.done = !e.done; drawGiftLog(); };
+      row.append(info, b);
+      box.appendChild(row);
+    });
+    if (!giftLog.length) box.innerHTML = '<div class="gempty">עוד לא הגיעו מתנות.</div>';
+  }
+
   // ----- is the board connected? (heartbeat) and did it run the command? (ack) -----
   const PREFIX = "tvo-";
   let lastBeat = 0, watching = "";
@@ -257,7 +313,8 @@
     watching = room; lastBeat = 0;
     if (!room) return;
     window.Relay.watch(PREFIX + room, () => { lastBeat = Date.now(); drawStat(); },
-      (id) => { const cb = pendingAcks.get(id); if (cb) { pendingAcks.delete(id); cb(); } });
+      (id) => { const cb = pendingAcks.get(id); if (cb) { pendingAcks.delete(id); cb(); } },
+      onBoardEvent);
   }
   function drawStat() {
     const el = $("boardStat");

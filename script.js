@@ -566,6 +566,7 @@
       const icon = giftIcon(name);
       add(side, votes, `${icon ? "" : "🎁 "}<b class="ltr">+${votes.toLocaleString("en-US")}</b> ל${esc(sideName(side))}`, icon);
       thank(id, user, votes);
+      if (cfg.room && window.Relay) window.Relay.notify("tvo-" + cfg.room, { type: "gift", user, gift: String(pick(d.giftName, det.giftName, d.gift_name, ext.name) || name), n: votes, side: sideName(side) });
       chatChip(user, side, icon);
       flyGift(side, icon);
       if (each >= cfg.bigGift || votes >= cfg.bigGift) takeover(side, icon, votes);

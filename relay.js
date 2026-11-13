@@ -108,20 +108,29 @@
     },
     // control panel: follow a room's board. onBeat(info) on each heartbeat, onAck(id) when the board ran a command.
     // mqttUp() says whether this panel can see the relay at all (if not, board status is unknown).
-    watch(topic, onBeat, onAck) {
-      const hb = mtopic(topic) + "/hb", ack = mtopic(topic) + "/ack";
+    watch(topic, onBeat, onAck, onEvent) {
+      const hb = mtopic(topic) + "/hb", ack = mtopic(topic) + "/ack", ev = mtopic(topic) + "/ev";
+      const seenEv = new Set();
       getClients().forEach((c) => {
-        const sub = () => c.subscribe([hb, ack]);
+        const sub = () => c.subscribe([hb, ack, ev]);
         if (c.connected) sub();
         c.on("connect", sub);
         c.on("message", (t, payload) => {
           if (t === hb) { try { onBeat(JSON.parse(payload.toString())); } catch (_) { onBeat({}); } }
           else if (t === ack) onAck(payload.toString());
+          else if (t === ev && onEvent) {
+            try { const e = JSON.parse(payload.toString()); if (e.id && seenEv.has(e.id)) return; if (e.id) seenEv.add(e.id); onEvent(e); } catch (_) { /* ignore */ }
+          }
         });
       });
     },
     unwatch(topic) {
-      getClients().forEach((c) => { try { c.unsubscribe([mtopic(topic) + "/hb", mtopic(topic) + "/ack"]); } catch (_) {} });
+      getClients().forEach((c) => { try { c.unsubscribe([mtopic(topic) + "/hb", mtopic(topic) + "/ack", mtopic(topic) + "/ev"]); } catch (_) {} });
+    },
+    // board -> control panel: something happened (e.g. a gift), so the streamer can thank the viewer out loud
+    notify(topic, data) {
+      const msg = JSON.stringify(Object.assign({ id: newId(), t: Date.now() }, data));
+      getClients().forEach((c) => { if (c.connected) c.publish(mtopic(topic) + "/ev", msg, { qos: 0 }); });
     },
     mqttUp() { return getClients().some((c) => c.connected); },
     // open the connections early (control panels call this on load so the first tap is fast)
