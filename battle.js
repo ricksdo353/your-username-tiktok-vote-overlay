@@ -40,9 +40,9 @@
   const T = HE ? {
     names: ["ישראל", "פלסטין", "ארה״ב", "איראן", "רוסיה", "אוקראינה", "מרוקו", "מצרים", "טורקיה", "סעודיה"],
     title: `🏁 מרוץ <span class="grad">מדינות</span>`,
-    hint: (n) => `כתבו <span class="grad ltr">1–${n}</span> או שלחו מתנה`,
-    rulesGoal: (g) => `🏁 הראשונים ל־<b class="ltr">${g}</b> מנצחים · 🎁 כל מתנה = נקודה למדינה שלה`,
-    rulesTime: `⏱ המובילים בסוף הזמן מנצחים · 🎁 כל מתנה = נקודה למדינה שלה`,
+    hint: (n) => `כתבו <span class="grad ltr">1–${n}</span> כדי להצטרף`,
+    rulesGoal: (g) => `🏁 הראשונים ל־<b class="ltr">${g}</b> מנצחים · כתבו את המספר של המדינה שלכם`,
+    rulesTime: `⏱ המובילים בסוף הזמן מנצחים · כתבו את המספר של המדינה שלכם`,
     to: (name) => "ל" + name,
     tie: "תיקו!", none: "אין מנצחים",
     won: (p) => `🏁 ראשונים בקו הסיום · <span class="ltr">${p}</span> נקודות`,
@@ -50,9 +50,9 @@
   } : {
     names: ["Israel", "Palestine", "USA", "Iran", "Russia", "Ukraine", "Morocco", "Egypt", "Turkey", "Saudi Arabia"],
     title: `🏁 Country <span class="grad">Race</span>`,
-    hint: (n) => `Comment <span class="grad ltr">1–${n}</span> or send a gift`,
-    rulesGoal: (g) => `🏁 First to <b class="ltr">${g}</b> wins · 🎁 Each gift = 1 point for its country`,
-    rulesTime: `⏱ Leader at the end wins · 🎁 Each gift = 1 point for its country`,
+    hint: (n) => `Comment <span class="grad ltr">1–${n}</span> to join`,
+    rulesGoal: (g) => `🏁 First to <b class="ltr">${g}</b> wins · Comment your country's number`,
+    rulesTime: `⏱ Leader at the end wins · Comment your country's number`,
     to: (name) => name,
     tie: "Tie!", none: "No winner",
     won: (p) => `🏁 First to the finish · <span class="ltr">${p}</span> points`,
@@ -144,6 +144,9 @@
   setInterval(() => { $("title").classList.toggle("off"); $("hint").classList.toggle("off"); }, 5000);
 
   /* ---------- lanes ---------- */
+  // gift pictures next to each country are off by default (showGifts=1 turns them on):
+  // a board that keeps advertising gifts can be treated by TikTok as gift solicitation
+  const SHOW_GIFTS = P.get("showGifts") === "1";
   const ROAD_W = 412, CAR_W = 112, LANE_H = 80;
   const TOP = 374, AREA = 888;
   const PITCH = Math.min(118, Math.floor(AREA / N));
@@ -170,15 +173,15 @@
     el.style.setProperty("--c", t.c[0]); el.style.setProperty("--c2", t.c[1]);
     el.innerHTML = `<div class="badge">${i + 1}</div><div class="crown">👑</div>${t.flag ? '<img class="flag" alt="">' : ""}
       <div class="tname"></div>
-      <div class="meta"><span class="gname"></span><span class="mem">👥 <span class="mc">0</span></span></div>${t.giftImg ? '<img class="gift" alt="">' : ""}
+      <div class="meta"><span class="gname"></span><span class="mem">👥 <span class="mc">0</span></span></div>${t.giftImg && SHOW_GIFTS ? '<img class="gift" alt="">' : ""}
       <div class="pts">0</div>
       <div class="road"><div class="fill"></div><div class="dash"></div><div class="flash"></div><div class="finish"></div></div>
       <div class="car">${carSvg(i, t.flag)}</div>`;
     el.querySelector(".tname").textContent = t.name;
     requestAnimationFrame(() => fitText(el.querySelector(".tname"), 34, 22));
-    el.querySelector(".gname").textContent = t.giftImg ? "" : t.giftLabel ? "🎁 " + t.giftLabel : "";
+    el.querySelector(".gname").textContent = !SHOW_GIFTS || t.giftImg ? "" : t.giftLabel ? "🎁 " + t.giftLabel : "";
     if (t.flag) el.querySelector(".flag").src = t.flag;
-    if (t.giftImg) { const g = el.querySelector(".gift"); g.src = t.giftImg; g.onerror = () => { g.remove(); el.querySelector(".gname").textContent = "🎁 " + t.giftLabel; }; }
+    if (t.giftImg && SHOW_GIFTS) { const g = el.querySelector(".gift"); g.src = t.giftImg; g.onerror = () => { g.remove(); el.querySelector(".gname").textContent = "🎁 " + t.giftLabel; }; }
     $("lanes").appendChild(el);
     return { el, car: el.querySelector(".car"), fill: el.querySelector(".fill"), flash: el.querySelector(".flash"), pts: el.querySelector(".pts"), mc: el.querySelector(".mc") };
   });

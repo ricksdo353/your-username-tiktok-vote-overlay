@@ -18,6 +18,7 @@
                       (comma-separated for several, e.g. giftA=Rose,Finger%20Heart).
                       Other gifts count for the side the viewer commented.
    giftAImg / giftBImg picture for side A / B gifts (Rose and TikTok have built-in pictures)
+   showGifts=1        show the gift tags on screen (off by default)
    giftMult           votes per diamond (default 1)
    likes              votes per like, e.g. likes=0.1 (default 0 = off)
    cooldown           ms between comment votes from the same viewer (default 2000)
@@ -104,7 +105,8 @@
 
   /* ---------- Init UI ---------- */
   if (cfg.question) $("question").textContent = cfg.question;
-  if (cfg.hint) $("hint").textContent = cfg.hint;
+  // older links put "מתנות = נקודות" in the hint; drop that part so the board never asks for gifts
+  if (cfg.hint) $("hint").textContent = cfg.hint.replace(/\s*[·•|,-]?\s*מתנות\s*=\s*נקודות\s*/g, "").trim() || cfg.hint;
   // keep each header line on one row: shrink a long line instead of letting it wrap onto the timer
   function fitHeader(el) {
     el.style.whiteSpace = "nowrap"; el.style.padding = "0 30px"; el.style.fontSize = "";
@@ -169,7 +171,9 @@
       const el = $(id);
       el.replaceChildren();
       list.forEach((g) => el.appendChild(giftNode(g)));
-      el.classList.toggle("hidden", !list.length);
+      // gift tags are off by default (showGifts=1 turns them on): a board that keeps
+      // advertising gifts can be treated by TikTok as gift solicitation
+      el.classList.toggle("hidden", !list.length || P.get("showGifts") !== "1");
     });
   }
   drawGiftChips();

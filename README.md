@@ -19,6 +19,12 @@ Viewers comment **1** or **2** to vote, gifts give bonus votes, and a timer anno
 - [Step 5: Connect to TikTok](#step-5-connect-to-tiktok)
 - [Step 6: Add the overlay to your stream](#step-6-add-the-overlay-to-your-stream)
 
+
+> ⚠️ **TikTok gift rules.** TikTok can suspend gifting and limit a LIVE's reach for "inorganic gift solicitation"
+> (repeatedly asking for gifts). So by default neither board shows gift prompts: no "gifts = points" text and no gift
+> pictures. Gifts viewers send on their own still count. Don't ask for gifts over and over on stream either.
+> `showGifts=1` turns the gift pictures back on, at your own risk.
+
 **Ready-made link**
 - [🇮🇱 נתניהו נגד איזנקוט](#-ready-made-נתניהו-נגד-איזנקוט)
 
@@ -83,7 +89,7 @@ Confetti (100 coins) = Eisenkot. Both sides get gifts of exactly the same price.
 [streamtoearn.io](https://streamtoearn.io/gifts?region=IL). Every coin = 1 point. Other gifts count for the side the viewer commented:
 
 ```
-https://ricksdo353.github.io/your-username-tiktok-vote-overlay/?left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98&leftImg=images/netanyahu.jpg&rightImg=images/eisenkot.jpg&q=%D7%9E%D7%99%20%D7%99%D7%A0%D7%A6%D7%97%3F&hint=%D7%9B%D7%AA%D7%91%D7%95%201%20%D7%90%D7%95%202%20%C2%B7%20%D7%9E%D7%AA%D7%A0%D7%95%D7%AA%20%3D%20%D7%A0%D7%A7%D7%95%D7%93%D7%95%D7%AA&timer=10%3A00&autostart=0&giftA=Rose%2CHand%20Heart&giftB=TikTok%2CConfetti
+https://ricksdo353.github.io/your-username-tiktok-vote-overlay/?left=%D7%91%D7%A0%D7%99%D7%9E%D7%99%D7%9F%20%D7%A0%D7%AA%D7%A0%D7%99%D7%94%D7%95&right=%D7%92%D7%93%D7%99%20%D7%90%D7%99%D7%96%D7%A0%D7%A7%D7%95%D7%98&leftImg=images/netanyahu.jpg&rightImg=images/eisenkot.jpg&q=%D7%9E%D7%99%20%D7%99%D7%A0%D7%A6%D7%97%3F&hint=%D7%9B%D7%AA%D7%91%D7%95%201%20%D7%90%D7%95%202&timer=10%3A00&autostart=0&giftA=Rose%2CHand%20Heart&giftB=TikTok%2CConfetti
 ```
 
 **Control panel link** (open on your phone or in a browser to run the rounds). It creates
@@ -358,6 +364,7 @@ Add settings to the end of the link, starting with `?` and joined with `&`. Exam
 | Setting | Example | What it does |
 |---|---|---|
 | `lang` | `lang=he` | Board language: English (default) or Hebrew |
+| `showGifts` | `showGifts=1` | Show each country's gift picture on the board (off by default, see the note below) |
 | `teams` | `teams=4` | How many countries race, 2–10 (the first ones in the table) |
 | `t1`…`t10` | `t5=France` | Rename a country. A renamed one has no flag unless you add `flagN` |
 | `flag1`…`flag10` | `flag5=https://…/fr.svg` | Flag picture (`flag5=none` hides it) |
