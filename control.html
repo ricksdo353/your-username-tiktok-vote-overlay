@@ -149,6 +149,8 @@
 </main>
 <div id="toast"></div>
 
+<script src="lib/mqtt.min.js"></script>
+<script src="relay.js"></script>
 <script>
 (() => {
   const P = new URLSearchParams(location.search);
@@ -240,15 +242,12 @@
   // ----- send commands -----
   async function send(cmd) {
     if (!room) return toast("חסר שם חדר", true);
-    try {
-      const r = await fetch(`${CTRL}/tvo-${encodeURIComponent(room)}`, { method: "POST", body: cmd });
-      if (r.status === 429) return toast("הגעת למגבלה היומית של ntfy.sh. השתמש במקלדת או בפקודות צ'אט", true);
-      if (!r.ok) throw new Error(r.status);
-      toast("נשלח ✓");
-    } catch (e) {
-      toast("השליחה נכשלה, בדוק את החיבור לאינטרנט", true);
-    }
+    const r = await window.Relay.send("tvo-" + room, cmd);
+    if (r === "ok") toast("נשלח ✓");
+    else if (r === "limit") toast("השליחה נכשלה (גם ntfy.sh הגיע למגבלה היומית). השתמש במקלדת או בפקודות צ'אט", true);
+    else toast("השליחה נכשלה, בדוק את החיבור לאינטרנט", true);
   }
+  window.Relay.warm();
 
   document.querySelectorAll("[data-cmd]").forEach((b) =>
     b.addEventListener("click", () => {

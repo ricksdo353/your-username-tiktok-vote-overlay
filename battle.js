@@ -560,19 +560,10 @@
   }
   function listenControl() {
     if (!cfg.room) return setCtrl(null);
-    const seen = new Set();
-    const es = new EventSource(`${cfg.ctrl}/tvr-${encodeURIComponent(cfg.room)}/sse`);
-    es.onopen = () => setCtrl(true);
-    es.onerror = () => setCtrl(false);
-    es.onmessage = (e) => {
-      try {
-        const m = JSON.parse(e.data);
-        if (m.event && m.event !== "message") return;
-        if (m.id) { if (seen.has(m.id)) return; seen.add(m.id); }
-        if (m.message) command(m.message);
-      } catch (_) { /* ignore */ }
-    };
+    if (!window.Relay) return setCtrl(false);
+    window.Relay.listen("tvr-" + cfg.room, (text) => command(text), (ok) => setCtrl(ok));
   }
+
 
   /* ---------- demo & keyboard ---------- */
   let demoId = null;

@@ -608,19 +608,10 @@
   }
   function listenControl() {
     if (!cfg.room) return setCtrl(null);
-    const seen = new Set();
-    const es = new EventSource(`${cfg.ctrl}/tvo-${encodeURIComponent(cfg.room)}/sse`);
-    es.onopen = () => setCtrl(true);
-    es.onerror = () => setCtrl(false);
-    es.onmessage = (e) => {
-      try {
-        const m = JSON.parse(e.data);
-        if (m.event && m.event !== "message") return;
-        if (m.id) { if (seen.has(m.id)) return; seen.add(m.id); }
-        if (m.message) command(m.message);
-      } catch (_) { /* ignore */ }
-    };
+    if (!window.Relay) return setCtrl(false);
+    window.Relay.listen("tvo-" + cfg.room, (text) => command(text), (ok) => setCtrl(ok));
   }
+
 
   // Public hooks for other scripts / tools
   window.Vote = { add, reset, handle, state, command, timer: { start: startTimer, pause, resume, adjust, state: timer } };

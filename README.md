@@ -529,6 +529,7 @@ On GitHub Pages, changes can take ~1 minute to appear.
 | `images/flags/` | Country flags (flag-icons, MIT) |
 | `control.html` | Remote control panel for the vote board (phone / browser) |
 | `race-control.html` | Remote control panel for the country race |
+| `relay.js` · `lib/mqtt.min.js` | Carries control-panel commands to the boards: two free public MQTT brokers (EMQX, HiveMQ) and ntfy.sh at the same time, so one being down or over its daily limit doesn't stop the panel (MQTT.js, MIT) |
 | `style.css` | Colors, layout, animations |
 | `fonts/` | Heebo Hebrew font (SIL Open Font License) |
 | `script.js` | Voting, timer, TikTok connection |
