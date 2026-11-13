@@ -181,6 +181,14 @@
       <button id="copyPanel">📱 העתק קישור ללוח הזה</button>
     </div>
     <small>הקישור ללוח מתאים לפתיחה בטלפון. כל מי שיש לו את שם החדר יכול לשלוט, אז אל תפרסם אותו.</small>
+    <label>🏎️ הקישור למרוץ המדינות (כבר עם החדר שלך, לשים ב-LIVE Studio):
+      <textarea id="raceOut" readonly></textarea>
+    </label>
+    <div class="row">
+      <button id="copyRace">📋 העתק קישור מרוץ (English)</button>
+      <button id="copyRaceHe">📋 העתק קישור מרוץ (עברית)</button>
+    </div>
+    <small>בתחתית הלוח עצמו יופיע "🎮 ✓" כשהוא מחובר ללוח הבקרה.</small>
   </section>
 </main>
 <div id="toast"></div>
@@ -233,6 +241,19 @@
   $("overlayIn").addEventListener("input", buildLinks);
   buildLinks();
 
+  // race board link (battle.html next to this page) with the room already in it
+  function raceLink(he) {
+    const u = new URL("battle.html", location.href);
+    u.search = "";
+    u.searchParams.set("room", room);
+    if (he) u.searchParams.set("lang", "he");
+    if (P.get("ctrl")) u.searchParams.set("ctrl", CTRL);
+    return u.toString();
+  }
+  function buildRace() { $("raceOut").value = room ? raceLink(false) : "⚠ חסר שם חדר"; }
+  buildRace();
+  $("room").addEventListener("input", buildRace);
+
   function panelLink() {
     const u = new URL(location.href);
     u.search = "";
@@ -266,6 +287,8 @@
   $("copyOverlay").onclick = () => $("overlayOut").value && !$("overlayOut").value.startsWith("⚠")
     ? copy($("overlayOut").value) : toast("קודם הדבק את קישור ה-overlay", true);
   $("copyPanel").onclick = () => copy(panelLink());
+  $("copyRace").onclick = () => (room ? copy(raceLink(false)) : toast("חסר שם חדר", true));
+  $("copyRaceHe").onclick = () => (room ? copy(raceLink(true)) : toast("חסר שם חדר", true));
 
   // ----- send commands -----
   async function send(cmd) {

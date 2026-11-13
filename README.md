@@ -370,8 +370,10 @@ Add settings to the end of the link, starting with `?` and joined with `&`. Exam
 | `chat` | `chat=0` | Points per comment (default `1`; `0` = comments only pick a country) |
 | `room` | `room=yourroom` | Control panel room (same as the vote board) |
 
-**Control panel:** paste the race link into the panel's "חיבור ל-overlay" box to add your room,
-exactly like the vote board. Start / pause / reset / end and the time buttons work the same.
+**Control panel:** the race only listens to the panel when its link has your room in it.
+Open the control panel, and in the "חיבור ל-overlay" section copy the **🏎️ race link**
+(English or Hebrew button). It already contains your room. Put that link in LIVE Studio.
+At the bottom of the board, **🎮 ✓** means it is connected to the panel (**🎮 ✗ no room** = the link has no room). Start / pause / reset / end and the time buttons work the same.
 The **🏎️ מרוץ מדינות** section has +10 / −10 for each country and goal presets.
 If the vote board and the race are both open with the same room, a button controls both,
 so use one board at a time (or give them different rooms).

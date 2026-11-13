@@ -551,10 +551,19 @@
       case "demo": toggleDemo(); break;
     }
   }
+  // small "🎮" mark next to the connection status: is the control panel linked?
+  function setCtrl(ok) {
+    let el = document.getElementById("ctrlStat");
+    if (!el) { el = document.createElement("div"); el.id = "ctrlStat"; el.className = "abs"; document.getElementById("stage").appendChild(el); }
+    el.textContent = ok === null ? "🎮 ✗ no room" : ok ? "🎮 ✓" : "🎮 …";
+    el.classList.toggle("on", ok === true);
+  }
   function listenControl() {
-    if (!cfg.room) return;
+    if (!cfg.room) return setCtrl(null);
     const seen = new Set();
     const es = new EventSource(`${cfg.ctrl}/tvo-${encodeURIComponent(cfg.room)}/sse`);
+    es.onopen = () => setCtrl(true);
+    es.onerror = () => setCtrl(false);
     es.onmessage = (e) => {
       try {
         const m = JSON.parse(e.data);

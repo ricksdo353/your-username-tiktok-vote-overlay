@@ -136,6 +136,8 @@ body.toasting .gift-tag, body.ended .gift-tag { opacity: 0; }
 #feed .item { font-size: 34px; padding: 8px 24px; border-radius: 26px; background: rgba(0,0,0,.6); display: flex; align-items: center; gap: 8px; }
 #status { right: 30px; bottom: 24px; font-size: 24px; opacity: .55; padding: 6px 16px; border-radius: 14px; background: rgba(0,0,0,.4); }
 #status.on { color: #6dff9b; }
+#ctrlStat { right: 260px; bottom: 24px; font-size: 24px; opacity: .55; padding: 6px 16px; border-radius: 14px; background: rgba(0,0,0,.4); direction: ltr; }
+#ctrlStat.on { color: #6dff9b; }
 
 @keyframes pulse { to { transform: scale(1.1); } }
 @keyframes slam { from { transform: scale(2.4); opacity: 0; } to { transform: none; opacity: 1; } }

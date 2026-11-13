@@ -105,6 +105,14 @@
   /* ---------- Init UI ---------- */
   if (cfg.question) $("question").textContent = cfg.question;
   if (cfg.hint) $("hint").textContent = cfg.hint;
+  // keep each header line on one row: shrink a long line instead of letting it wrap onto the timer
+  function fitHeader(el) {
+    el.style.whiteSpace = "nowrap"; el.style.padding = "0 30px"; el.style.fontSize = "";
+    const max = parseFloat(getComputedStyle(el).fontSize) || 92;
+    for (let fs = max; fs > 40 && el.scrollWidth > el.clientWidth + 1; fs -= 2) el.style.fontSize = fs + "px";
+  }
+  fitHeader($("question")); fitHeader($("hint"));
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { fitHeader($("question")); fitHeader($("hint")); });
 
   // background dots (same as the video), drifting upward
   (function dots() {
@@ -320,7 +328,7 @@
       const html = timer.duration > 0
         ? (mins >= 1 ? `<span class="grad">${mins} דקות</span> לכל סבב` : `<span class="grad">${timer.duration} שניות</span> לכל סבב`)
         : `מי <span class="grad">ינצח?</span>`;
-      if (q.innerHTML !== html) q.innerHTML = html;
+      if (q.innerHTML !== html) { q.innerHTML = html; fitHeader(q); }
     }
     $("timerText").textContent = timer.ended ? "0:00" : mmss(Math.ceil(timer.remaining));
     el.classList.toggle("paused", !timer.running && !timer.ended);
@@ -591,10 +599,19 @@
   }
 
   // Control panel channel: control.html publishes to ntfy.sh/<topic>, we listen via SSE
+  // small "🎮" mark next to the connection status: is the control panel linked?
+  function setCtrl(ok) {
+    let el = document.getElementById("ctrlStat");
+    if (!el) { el = document.createElement("div"); el.id = "ctrlStat"; el.className = "abs"; document.getElementById("stage").appendChild(el); }
+    el.textContent = ok === null ? "🎮 ✗ no room" : ok ? "🎮 ✓" : "🎮 …";
+    el.classList.toggle("on", ok === true);
+  }
   function listenControl() {
-    if (!cfg.room) return;
+    if (!cfg.room) return setCtrl(null);
     const seen = new Set();
     const es = new EventSource(`${cfg.ctrl}/tvo-${encodeURIComponent(cfg.room)}/sse`);
+    es.onopen = () => setCtrl(true);
+    es.onerror = () => setCtrl(false);
     es.onmessage = (e) => {
       try {
         const m = JSON.parse(e.data);
