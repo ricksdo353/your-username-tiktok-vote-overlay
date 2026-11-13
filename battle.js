@@ -43,6 +43,8 @@
     hint: (n) => `כתבו <span class="grad ltr">1–${n}</span> כדי להצטרף`,
     rulesGoal: (g) => `🏁 הראשונים ל־<b class="ltr">${g}</b> מנצחים · כתבו את המספר של המדינה שלכם`,
     rulesTime: `⏱ המובילים בסוף הזמן מנצחים · כתבו את המספר של המדינה שלכם`,
+    info: `🎁 מתנות נספרות כנקודות למדינה שלכם`,
+    thanks: `🙏 תודה ל־`,
     to: (name) => "ל" + name,
     tie: "תיקו!", none: "אין מנצחים",
     won: (p) => `🏁 ראשונים בקו הסיום · <span class="ltr">${p}</span> נקודות`,
@@ -53,6 +55,8 @@
     hint: (n) => `Comment <span class="grad ltr">1–${n}</span> to join`,
     rulesGoal: (g) => `🏁 First to <b class="ltr">${g}</b> wins · Comment your country's number`,
     rulesTime: `⏱ Leader at the end wins · Comment your country's number`,
+    info: `🎁 Gifts count as points for your country`,
+    thanks: `🙏 Thanks `,
     to: (name) => name,
     tie: "Tie!", none: "No winner",
     won: (p) => `🏁 First to the finish · <span class="ltr">${p}</span> points`,
@@ -147,6 +151,7 @@
   // gift pictures next to each country are off by default (showGifts=1 turns them on):
   // a board that keeps advertising gifts can be treated by TikTok as gift solicitation
   const SHOW_GIFTS = P.get("showGifts") === "1";
+  const giftCoins = new Map(); // viewer id -> { name, n } gifts only, for the thank-you line
   const ROAD_W = 412, CAR_W = 112, LANE_H = 80;
   const TOP = 374, AREA = 888;
   const PITCH = Math.min(118, Math.floor(AREA / N));
@@ -204,11 +209,18 @@
       l.el.classList.toggle("hot", cfg.goal > 0 && p >= 0.8 && !round.ended);
     });
   }
+  /* The line under the race shows, in turn: a calm one-time note that gifts count (6 s at the start of a race),
+     then the rules, alternating with a thank-you to the race's top 3 gifters. No repeating "send gifts" text. */
+  let infoUntil = 0, rulesFlip = false;
+  function showGiftInfo() { if (P.get("giftInfo") !== "0") { infoUntil = Date.now() + 6000; drawRules(); setTimeout(drawRules, 6100); } }
+  setInterval(() => { rulesFlip = !rulesFlip; drawRules(); }, 7000);
   function drawRules() {
-    $("rules").innerHTML = cfg.goal > 0
-      ? T.rulesGoal(fmt(cfg.goal))
-      : T.rulesTime;
-    const r = $("rules"); r.style.fontSize = "38px";
+    const r = $("rules");
+    const top = P.get("thanks") === "0" ? [] : [...giftCoins.values()].sort((x, y) => y.n - x.n).slice(0, 3);
+    if (Date.now() < infoUntil) r.textContent = T.info;
+    else if (rulesFlip && top.length) { r.textContent = T.thanks + top.map((s) => s.name).join(" · "); }
+    else r.innerHTML = cfg.goal > 0 ? T.rulesGoal(fmt(cfg.goal)) : T.rulesTime;
+    r.style.fontSize = "38px";
     for (let fs = 38; fs > 26 && r.scrollWidth > r.clientWidth; fs -= 2) r.style.fontSize = fs + "px";
   }
 
@@ -350,6 +362,7 @@
     if (round.ended) clearScores();
     round.ended = false;
     timer.remaining = timer.duration;
+    showGiftInfo();
     resume();
   }
   function resume() {
@@ -381,7 +394,7 @@
   }
   function clearScores() {
     pts.fill(0); likeCarry.fill(0);
-    members.clear(); contrib.clear(); lastChat.clear();
+    members.clear(); contrib.clear(); lastChat.clear(); giftCoins.clear();
   }
   function reset() {
     hideWin();
@@ -507,6 +520,7 @@
       flyGift(i, icon);
       if (each >= cfg.bigGift || n >= cfg.bigGift) takeover(i, icon, n);
       add(i, n, user, id);
+      if (P.get("thanks") !== "0") { const s = giftCoins.get(id) || { name: user, n: 0 }; s.n += n; s.name = user || s.name; giftCoins.set(id, s); }
     }
 
     else if (type === "like" && cfg.likes > 0) {

@@ -107,6 +107,13 @@ body.bg-none #tickerFade, body.bg-panel #tickerFade { display: none; }
 .gift-item { display: inline-flex; align-items: center; gap: 6px; }
 .gift-icon { width: 58px; height: 58px; object-fit: contain; }
 body.toasting .gift-tag, body.ended .gift-tag { opacity: 0; }
+/* thank-you line for the round's top gifters, and a short "how gifts work" note at the start of a round */
+#thanks { left: 90px; top: 1214px; width: 900px; height: 76px; border-radius: 38px; display: flex; align-items: center; justify-content: center; gap: 12px;
+  font-size: 36px; font-weight: 800; white-space: nowrap; overflow: hidden; background: rgba(12,10,40,.72); border: 3px solid rgba(255,211,77,.65);
+  transition: opacity .25s; padding: 0 26px; }
+#thanks b { color: #ffd34d; }
+#thanks .nm { max-width: 230px; overflow: hidden; text-overflow: ellipsis; display: inline-block; vertical-align: bottom; }
+body.toasting #thanks, body.ended #thanks { opacity: 0; }
 
 /* end of round (video: "צמוד!" line) */
 #winner { left: 0; top: 1160px; width: 1080px; font-size: 122px; font-weight: 900; line-height: 1; text-shadow: 0 0 50px rgba(255,211,77,.6); animation: slam .25s cubic-bezier(.6,0,1,1); }

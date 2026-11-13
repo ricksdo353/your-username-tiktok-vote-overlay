@@ -24,6 +24,9 @@ Viewers comment **1** or **2** to vote, gifts give bonus votes, and a timer anno
 > (repeatedly asking for gifts). So by default neither board shows gift prompts: no "gifts = points" text and no gift
 > pictures. Gifts viewers send on their own still count. Don't ask for gifts over and over on stream either.
 > `showGifts=1` turns the gift pictures back on, at your own risk.
+>
+> Instead, both boards **recognize** gifters: a "🙏 תודה ל־ / Thanks" line with the round's top 3 gifters, and a calm
+> note at the start of each round, for 6 seconds, that gifts count as points. Turn them off with `thanks=0` / `giftInfo=0`.
 
 **Ready-made link**
 - [🇮🇱 נתניהו נגד איזנקוט](#-ready-made-נתניהו-נגד-איזנקוט)

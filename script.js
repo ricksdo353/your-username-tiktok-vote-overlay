@@ -19,6 +19,8 @@
                       Other gifts count for the side the viewer commented.
    giftAImg / giftBImg picture for side A / B gifts (Rose and TikTok have built-in pictures)
    showGifts=1        show the gift tags on screen (off by default)
+   giftInfo=0         turn off the short "gifts count as points" note at the start of each round
+   thanks=0           turn off the thank-you line for the round's top gifters
    giftMult           votes per diamond (default 1)
    likes              votes per like, e.g. likes=0.1 (default 0 = off)
    cooldown           ms between comment votes from the same viewer (default 2000)
@@ -361,6 +363,8 @@
     if (seconds > 0) timer.duration = seconds; // ignore missing/invalid times
     if (timer.duration <= 0) return;
     clearTimeout(nextRoundId);
+    if (timer.ended) supporters.clear();
+    showGiftInfo();
     timer.remaining = timer.duration;
     timer.ended = false;
     $("winner").classList.add("hidden");
@@ -435,8 +439,47 @@
     if (label) toast(label, side, icon);
   }
 
+  /* ---------- recognition instead of asking ----------
+     A thank-you line for the round's top 3 gifters, and a calm one-time note at the start of
+     each round that gifts count. No repeating "send gifts" text (TikTok treats that as solicitation). */
+  const supporters = new Map(); // viewer id -> { name, n }
+  let infoUntil = 0, infoTimer = null;
+  function thank(id, name, n) {
+    if (P.get("thanks") === "0") return;
+    const s = supporters.get(id) || { name, n: 0 };
+    s.n += n; s.name = name || s.name;
+    supporters.set(id, s);
+    drawThanks();
+  }
+  function showGiftInfo() {
+    if (P.get("giftInfo") === "0") return;
+    infoUntil = Date.now() + 6000;
+    drawThanks();
+    clearTimeout(infoTimer);
+    infoTimer = setTimeout(drawThanks, 6100);
+  }
+  function drawThanks() {
+    const el = $("thanks");
+    el.replaceChildren();
+    if (Date.now() < infoUntil) {
+      el.append("🎁 מתנות נספרות כנקודות לצד שבחרתם");
+    } else {
+      const top = [...supporters.values()].sort((x, y) => y.n - x.n).slice(0, 3);
+      if (!top.length) { el.classList.add("hidden"); return; }
+      el.append("🙏 תודה ל־");
+      top.forEach((s, k) => {
+        if (k) el.append(" · ");
+        const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = s.name; el.appendChild(nm);
+      });
+    }
+    el.classList.remove("hidden");
+    el.style.fontSize = "36px";
+    for (let fs = 36; fs > 24 && el.scrollWidth > el.clientWidth; fs -= 2) el.style.fontSize = fs + "px";
+  }
+
   function reset() {
     clearTimeout(nextRoundId);
+    supporters.clear(); drawThanks();
     state.a = state.b = 0;
     likeCarry.a = likeCarry.b = 0;
     lastVote.clear();
@@ -522,6 +565,7 @@
       const votes = Math.max(1, Math.round(diamonds * cfg.giftMult));
       const icon = giftIcon(name);
       add(side, votes, `${icon ? "" : "🎁 "}<b class="ltr">+${votes.toLocaleString("en-US")}</b> ל${esc(sideName(side))}`, icon);
+      thank(id, user, votes);
       chatChip(user, side, icon);
       flyGift(side, icon);
       if (each >= cfg.bigGift || votes >= cfg.bigGift) takeover(side, icon, votes);
