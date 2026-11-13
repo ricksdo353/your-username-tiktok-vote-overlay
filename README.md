@@ -27,6 +27,9 @@ Viewers comment **1** or **2** to vote, gifts give bonus votes, and a timer anno
 >
 > Instead, both boards **recognize** gifters: a "🙏 תודה ל־ / Thanks" line with the round's top 3 gifters, and a calm
 > note at the start of each round, for 6 seconds, that gifts count as points. Turn them off with `thanks=0` / `giftInfo=0`.
+> Each gift also gets an automatic "🙏 תודה <name>!" on screen and spoken out loud (if the computer has a voice for the
+> language; `voice=0` turns the voice off), and a how-to-play reminder shows every 15 seconds (`rules=0` turns it off).
+> The "gifts count" line is deliberately **not** part of the 15-second reminders.
 
 **Ready-made link**
 - [🇮🇱 נתניהו נגד איזנקוט](#-ready-made-נתניהו-נגד-איזנקוט)
@@ -539,6 +542,7 @@ On GitHub Pages, changes can take ~1 minute to appear.
 | `images/flags/` | Country flags (flag-icons, MIT) |
 | `control.html` | Remote control panel for the vote board (phone / browser) |
 | `race-control.html` | Remote control panel for the country race |
+| `speak.js` | Says "thank you <name>" out loud for gifts (browser speech) |
 | `relay.js` · `lib/mqtt.min.js` | Carries control-panel commands to the boards: four free public MQTT brokers (shiftr.io and Eclipse on port 443, EMQX, HiveMQ) and ntfy.sh at the same time, with automatic retries, so one being down or over its daily limit doesn't stop the panel (MQTT.js, MIT) |
 | `style.css` | Colors, layout, animations |
 | `fonts/` | Heebo Hebrew font (SIL Open Font License) |

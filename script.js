@@ -21,6 +21,8 @@
    showGifts=1        show the gift tags on screen (off by default)
    giftInfo=0         turn off the short "gifts count as points" note at the start of each round
    thanks=0           turn off the thank-you line for the round's top gifters
+   rules=0            turn off the how-to-play reminder every 15 s
+   voice=0            don't say "thank you <name>" out loud for gifts
    giftMult           votes per diamond (default 1)
    likes              votes per like, e.g. likes=0.1 (default 0 = off)
    cooldown           ms between comment votes from the same viewer (default 2000)
@@ -458,14 +460,24 @@
     clearTimeout(infoTimer);
     infoTimer = setTimeout(drawThanks, 6100);
   }
+  // how-to-play reminders: one every 15 s, shown for 5 s (gift line is NOT repeated, see above)
+  const RULES = [
+    () => `🗳️ כתבו 1 ל${cfg.left} או 2 ל${cfg.right}`,
+    () => timer.duration > 0 ? `⏱ סבב של ${Math.round(timer.duration / 60) || 1} דקות, ואז מכריזים מנצח` : "🏆 מי שמוביל בסוף מנצח",
+    () => "💬 אפשר להצביע שוב כל כמה שניות",
+  ];
+  let ruleIdx = -1, ruleUntil = 0;
+  if (P.get("rules") !== "0") setInterval(() => { ruleIdx++; ruleUntil = Date.now() + 5000; drawThanks(); setTimeout(drawThanks, 5100); }, 15000);
   function drawThanks() {
     const el = $("thanks");
     el.replaceChildren();
     if (Date.now() < infoUntil) {
       el.append("🎁 מתנות נספרות כנקודות לצד שבחרתם");
+    } else if (Date.now() < ruleUntil) {
+      el.append(RULES[ruleIdx % RULES.length]());
     } else {
       const top = [...supporters.values()].sort((x, y) => y.n - x.n).slice(0, 3);
-      if (!top.length) { el.classList.add("hidden"); return; }
+      if (!top.length) { el.classList.add("hidden"); return; } // nothing to show between reminders
       el.append("🙏 תודה ל־");
       top.forEach((s, k) => {
         if (k) el.append(" · ");
@@ -564,7 +576,8 @@
       const diamonds = each * count;
       const votes = Math.max(1, Math.round(diamonds * cfg.giftMult));
       const icon = giftIcon(name);
-      add(side, votes, `${icon ? "" : "🎁 "}<b class="ltr">+${votes.toLocaleString("en-US")}</b> ל${esc(sideName(side))}`, icon);
+      add(side, votes, `🙏 תודה ${esc(user)}! <b class="ltr">+${votes.toLocaleString("en-US")}</b> ל${esc(sideName(side))}`, icon);
+      if (window.SpeakThanks) window.SpeakThanks(user, "he");
       thank(id, user, votes);
       if (cfg.room && window.Relay) window.Relay.notify("tvo-" + cfg.room, { type: "gift", user, gift: String(pick(d.giftName, det.giftName, d.gift_name, ext.name) || name), n: votes, side: sideName(side) });
       chatChip(user, side, icon);
