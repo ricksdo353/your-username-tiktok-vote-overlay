@@ -8,15 +8,25 @@
   const P = new URLSearchParams(location.search);
   const NTFY = (P.get("ctrl") || "https://ntfy.sh").replace(/\/$/, "");
   const useNtfy = P.get("ctrl") !== "off";
-  const BROKERS = P.get("mqtt") === "off" ? [] :
-    (P.get("mqtt") || "wss://broker.emqx.io:8084/mqtt,wss://broker.hivemq.com:8884/mqtt").split(",").map((s) => s.trim()).filter(Boolean);
+  // Free public MQTT brokers. Two use the normal web port 443, which mobile networks don't block.
+  const DEFAULT_BROKERS = [
+    { url: "wss://public.cloud.shiftr.io", username: "public", password: "public" },
+    { url: "wss://mqtt.eclipseprojects.io:443/mqtt" },
+    { url: "wss://broker.emqx.io:8084/mqtt" },
+    { url: "wss://broker.hivemq.com:8884/mqtt" },
+  ];
+  const BROKERS = P.get("mqtt") === "off" ? [] : P.get("mqtt")
+    ? P.get("mqtt").split(",").map((s) => s.trim()).filter(Boolean).map((url) => ({ url }))
+    : DEFAULT_BROKERS;
   const mtopic = (t) => "tiktok-live-overlay/" + t;
   let clients = null;
   function getClients() {
     if (clients) return clients;
-    clients = typeof mqtt === "undefined" ? [] : BROKERS.map((url) => {
+    clients = typeof mqtt === "undefined" ? [] : BROKERS.map((b) => {
       try {
-        const c = mqtt.connect(url, { clientId: "tvo_" + Math.random().toString(16).slice(2, 12), clean: true, reconnectPeriod: 3000, connectTimeout: 8000, keepalive: 30 });
+        const opts = { clientId: "tvo_" + Math.random().toString(16).slice(2, 12), clean: true, reconnectPeriod: 3000, connectTimeout: 8000, keepalive: 30 };
+        if (b.username) { opts.username = b.username; opts.password = b.password; }
+        const c = mqtt.connect(b.url, opts);
         c.on("error", () => {});
         return c;
       } catch (_) { return null; }
@@ -65,9 +75,18 @@
       report();
     },
     // resolves "ok" as soon as one route accepted the command, otherwise "limit" (ntfy quota, nothing else worked) or "fail"
-    send(topic, cmd, onId) {
-      const id = newId(), payload = id + "|" + cmd;
+    // tries again for up to 10 s if no route worked (same id, so the board still runs it only once)
+    async send(topic, cmd, onId) {
+      const id = newId();
       if (onId) onId(id);
+      for (let attempt = 0; attempt < 4; attempt++) {
+        const r = await this._sendOnce(topic, id + "|" + cmd);
+        if (r === "ok") return "ok";
+        await new Promise((res) => setTimeout(res, 2500));
+      }
+      return "fail";
+    },
+    _sendOnce(topic, payload) {
       const tries = [];
       getClients().forEach((c) => tries.push(new Promise((res) => {
         const go = () => c.publish(mtopic(topic), payload, { qos: 0 }, (err) => res(err ? "fail" : "ok"));

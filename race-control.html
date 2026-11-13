@@ -174,8 +174,8 @@
 </main>
 <div id="toast"></div>
 
-<script src="lib/mqtt.min.js?v=202611131252"></script>
-<script src="relay.js?v=202611131252"></script>
+<script src="lib/mqtt.min.js?v=202611131320"></script>
+<script src="relay.js?v=202611131320"></script>
 <script>
 (() => {
   const P = new URLSearchParams(location.search);
@@ -256,7 +256,7 @@
     const el = $("boardStat");
     if (!room) { el.className = "bstat bad"; el.innerHTML = "🔴 חסר שם חדר"; return; }
     if (Date.now() - lastBeat < 12000) { el.className = "bstat ok"; el.innerHTML = "🟢 המרוץ מחובר לחדר הזה"; return; }
-    if (!window.Relay.mqttUp()) { el.className = "bstat wait"; el.innerHTML = "⏳ מתחבר…<small>אם זה נשאר ככה, הרשת של הטלפון חוסמת את הבדיקה. נסה Wi-Fi.</small>"; return; }
+    if (!window.Relay.mqttUp()) { el.className = "bstat wait"; el.innerHTML = "⏳ מתחבר…<small>אם זה נשאר ככה, אי אפשר לבדוק מהטלפון אם הלוח מחובר, אבל הפקודות עדיין נשלחות. תסתכל על הלוח עצמו.</small>"; return; }
     el.className = "bstat bad";
     el.innerHTML = "🔴 אין המרוץ בחדר <span class=\"room\">" + room + "</span>" +
       "<small>ב-LIVE Studio: לחץ ימני על המקור ← Refresh. אם עדיין אדום: העתק את הקישור מה-LIVE Studio והדבק אותו כאן למטה בחיבור, כדי שהחדרים יתאימו.</small>";
@@ -271,8 +271,8 @@
       pendingAcks.set(id, () => { acked = true; toast("הלוח קיבל ✓"); });
     });
     if (acked) return;
-    if (r === "limit") toast("השליחה נכשלה (גם ntfy.sh הגיע למגבלה היומית). השתמש במקלדת או בפקודות צ'אט", true);
-    else if (r !== "ok") toast("השליחה נכשלה, בדוק את החיבור לאינטרנט", true);
+    if (r !== "ok") toast("השליחה לא עברה. בדוק אינטרנט או נסה Wi-Fi", true);
+    else if (!window.Relay.mqttUp()) toast("נשלח ✓"); // confirmation needs the MQTT route; without it we can't wait for one
     else {
       toast("נשלח… מחכה שהלוח יאשר");
       setTimeout(() => {
