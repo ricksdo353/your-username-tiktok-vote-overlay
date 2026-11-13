@@ -23,7 +23,7 @@ Viewers comment **1** or **2** to vote, gifts give bonus votes, and a timer anno
 - [🇮🇱 נתניהו נגד איזנקוט](#-ready-made-נתניהו-נגד-איזנקוט)
 
 **Second board**
-- [🏁 Team battle (4 teams)](#-team-battle-4-teams)
+- [🏎️ Country car race (4 teams)](#️-country-car-race-4-teams)
 
 **Using it**
 - [🎮 Control panel](#-control-panel)
@@ -316,16 +316,17 @@ your own LIVE chat:
 
 ---
 
-# 🏁 Team battle (4 teams)
+# 🏎️ Country car race (4 teams)
 
-A second board with its own link: **`battle.html`**. It connects to TikTok exactly like the vote board
+A second board with its own link: **`battle.html`**. Four cars race to the finish line:
+**1 = 🇮🇱 ישראל · 2 = 🇵🇸 פלסטין · 3 = 🇺🇸 ארה״ב · 4 = 🇮🇷 איראן** (each car has its country's colors and flag). It connects to TikTok exactly like the vote board
 (TikFinity or `server.js`, Steps 5–6), and uses the same control panel.
 
 **How viewers play**
-1. A viewer comments **1**, **2**, **3** or **4** to join that team (they stay in it until the round ends).
+1. A viewer comments **1**, **2**, **3** or **4** to join that country (they stay with it until the round ends).
 2. Every comment of their team number = **+1** point (once every 2 seconds per viewer).
 3. Their gifts go to their team: **1 coin = 1 point**. Their likes help too (10 likes = 1 point).
-4. Each team's runner moves toward the finish line. The first team to the goal (default **1,000**) wins.
+4. Each country's car drives toward the finish line. The first team to the goal (default **1,000**) wins.
 5. The winner and the team's MVP (who gave the most points) are shown, and after 15 seconds
    a new round starts by itself. Everyone can pick a team again.
 
@@ -339,8 +340,8 @@ Add settings to the end of the link, starting with `?` and joined with `&`. Exam
 
 | Setting | Example | What it does |
 |---|---|---|
-| `t1`…`t4` | `t1=Real Madrid` | Team names (default הכחולים, הסגולים, הורודים, הצהובים) |
-| `img1`…`img4` | `img1=images/netanyahu.jpg` | Picture on a team's runner (default: its number) |
+| `t1`…`t4` | `t3=מצרים` | Country / team names (default ישראל, פלסטין, ארה״ב, איראן). A renamed team has no flag unless you add `flagN` |
+| `flag1`…`flag4` | `flag3=https://…/egypt.png` | Flag picture for a team (`flag3=none` hides it) |
 | `goal` | `goal=500` | Points to win (`goal=0` = no goal, the timer decides) |
 | `timer` | `timer=5:00` | Round length; when it hits 0 the leading team wins (default: no timer) |
 | `next` | `next=30` | Seconds the winner is shown before a new round (default `15`, `next=0` = off) |
@@ -354,7 +355,7 @@ Example with a 5-minute timer and a goal of 2,000:
 
 **Control panel:** paste the battle link into the panel's "חיבור ל-overlay" box to add your room,
 exactly like the vote board. Start / pause / reset / end and the time buttons work the same.
-The **🏁 קרב קבוצות** section has +10 / −10 per team and goal presets.
+The **🏎️ מרוץ מדינות** section has +10 / −10 per team and goal presets.
 If the vote board and the battle board are both open with the same room, a button controls both,
 so use one board at a time (or give them different rooms).
 
@@ -500,7 +501,7 @@ On GitHub Pages, changes can take ~1 minute to appear.
 | File | What it is |
 |---|---|
 | `index.html` | The overlay page |
-| `battle.html` · `battle.css` · `battle.js` | Team battle board (4 teams) |
+| `battle.html` · `battle.css` · `battle.js` | Country car race board (4 teams) |
 | `control.html` | Remote control panel (phone / browser) |
 | `style.css` | Colors, layout, animations |
 | `fonts/` | Heebo Hebrew font (SIL Open Font License) |

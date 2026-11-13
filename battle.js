@@ -1,13 +1,14 @@
 /* =========================================================
-   TikTok LIVE Team Battle (4 teams) – battle.html
+   TikTok LIVE Country Race (4 cars) – battle.html
    Viewers join a team by commenting its number (1-4). Every comment, like and
    gift from a team member pushes that team's runner toward the finish line.
    First team to the goal wins (or the leader when the timer runs out); the
    winner is shown, then everything resets and a new round starts by itself.
 
    URL parameters (all optional):
-   t1 t2 t3 t4        team names (default הכחולים, הסגולים, הורודים, הצהובים)
-   img1 … img4        picture for a team's runner (default: its number)
+   t1 t2 t3 t4        team names (default ישראל, פלסטין, ארה״ב, איראן)
+   flag1 … flag4      flag picture URL for a team (flagN=none hides it); a renamed
+                      team has no flag unless you give one
    goal               points to win (default 1000; goal=0 = no goal, timer only)
    timer              round length, seconds or m:ss (default none)
    next               seconds the winner is shown before a new round starts
@@ -28,7 +29,8 @@
   const P = new URLSearchParams(location.search);
   const num = (v, def = 0) => { const n = Number(v); return Number.isFinite(n) ? n : def; };
   const cfg = {
-    names: [1, 2, 3, 4].map((i, k) => P.get("t" + i) || ["הכחולים", "הסגולים", "הורודים", "הצהובים"][k]),
+    names: [1, 2, 3, 4].map((i, k) => P.get("t" + i) || ["ישראל", "פלסטין", "ארה״ב", "איראן"][k]),
+    flags: [1, 2, 3, 4].map((i) => P.get("flag" + i)),
     imgs: [1, 2, 3, 4].map((i) => P.get("img" + i) || ""),
     gifts: [1, 2, 3, 4].map((i) => (P.get("gift" + i) || "").split(",").map((g) => g.trim().toLowerCase()).filter(Boolean)),
     goal: Math.max(0, Math.floor(num(P.get("goal") ?? 1000, 1000))),
@@ -46,7 +48,34 @@
     takeover: P.get("takeover") !== "0",
     countdown: P.get("countdown") !== "0",
   };
-  const COL = [["#2f8bff", "#1456c9"], ["#8a3dff", "#4b14b5"], ["#ff3d9a", "#b5145a"], ["#ffb82e", "#c77a00"]];
+  const COL = [["#2f8bff", "#1456c9"], ["#1fa055", "#0d6b37"], ["#e0283c", "#9c1224"], ["#ff8a1f", "#b85a00"]];
+  // Flags drawn here (public-domain designs) so they show everywhere, even where flag emoji don't (Windows / LIVE Studio)
+  const svgUri = (w, h, body) => "data:image/svg+xml;charset=utf-8," + encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 ${w} ${h}' preserveAspectRatio='xMidYMid slice'>${body}</svg>`);
+  const usStars = (() => { let d = ""; for (let r = 0; r < 9; r++) for (let k = 0; k < (r % 2 ? 5 : 6); k++) d += `<circle cx='${(r % 2 ? 12.6 : 6.3) + k * 12.6}' cy='${5.4 + r * 5.4}' r='2.1'/>`; return d; })();
+  const FLAGS = [
+    svgUri(220, 160, "<rect width='220' height='160' fill='#fff'/><rect y='15' width='220' height='25' fill='#0038b8'/><rect y='120' width='220' height='25' fill='#0038b8'/>" +
+      "<g fill='none' stroke='#0038b8' stroke-width='5.5'><path d='M110 50L136 95H84Z'/><path d='M110 110L136 65H84Z'/></g>"),
+    svgUri(300, 150, "<rect width='300' height='50' fill='#000'/><rect y='50' width='300' height='50' fill='#fff'/><rect y='100' width='300' height='50' fill='#149954'/><path d='M0 0L100 75L0 150Z' fill='#e4312b'/>"),
+    svgUri(190, 100, Array.from({ length: 13 }, (_, r) => `<rect y='${(r * 100 / 13).toFixed(2)}' width='190' height='${(100 / 13).toFixed(2)}' fill='${r % 2 ? "#fff" : "#b22234"}'/>`).join("") +
+      `<rect width='76' height='53.85' fill='#3c3b6e'/><g fill='#fff'>${usStars}</g>`),
+    svgUri(630, 360, "<rect width='630' height='120' fill='#239f40'/><rect y='120' width='630' height='120' fill='#fff'/><rect y='240' width='630' height='120' fill='#da0000'/>" +
+      "<g fill='none' stroke='#da0000' stroke-width='9' stroke-linecap='round'><path d='M315 140v80'/><path d='M298 150q-26 30 0 62'/><path d='M332 150q26 30 0 62'/>" +
+      "<path d='M282 138q-46 46 2 92'/><path d='M348 138q46 46-2 92'/></g>"),
+  ];
+  cfg.flags = cfg.flags.map((f, i) => (f === "none" ? "" : f || (P.get("t" + (i + 1)) ? "" : FLAGS[i])));
+  const CAR_W = 190;
+  const carSvg = (i, flag) => `<svg viewBox="0 0 190 84" aria-hidden="true">
+    <ellipse cx="96" cy="80" rx="88" ry="5" fill="rgba(0,0,0,.45)"/>
+    <path class="flame" d="M184 46 L214 40 L204 50 L222 56 L184 58 Z" fill="#ffb02e"/>
+    <path d="M6 60 Q4 44 20 40 L54 34 Q72 14 100 12 L132 12 Q154 14 166 32 L178 36 Q190 40 188 60 Z" fill="${COL[i][0]}" stroke="#fff" stroke-width="3"/>
+    <path d="M6 60 L188 60 L186 52 L8 52 Z" fill="${COL[i][1]}"/>
+    <path d="M62 34 Q76 21 98 19 L104 19 L104 34 Z M110 19 L128 19 Q142 21 152 34 L110 34 Z" fill="#0b1530" opacity=".88"/>
+    <ellipse cx="13" cy="46" rx="6" ry="4" fill="#fff6c0"/><rect x="180" y="40" width="7" height="8" rx="2" fill="#ff2d2d"/>
+    ${flag ? `<image href="${flag}" x="112" y="37" width="40" height="24" preserveAspectRatio="xMidYMid slice"/><rect x="112" y="37" width="40" height="24" fill="none" stroke="#fff" stroke-width="2"/>` : ""}
+    <circle cx="80" cy="46" r="11" fill="#fff"/><text x="80" y="51.5" text-anchor="middle" font-size="16" font-weight="900" font-family="Heebo, Arial" fill="${COL[i][1]}">${i + 1}</text>
+    <g class="wheel"><circle cx="46" cy="62" r="17" fill="#111"/><circle cx="46" cy="62" r="8" fill="#c9c9d6"/><path d="M46 47v30M31 62h30" stroke="#555" stroke-width="3"/></g>
+    <g class="wheel"><circle cx="150" cy="62" r="17" fill="#111"/><circle cx="150" cy="62" r="8" fill="#c9c9d6"/><path d="M150 47v30M135 62h30" stroke="#555" stroke-width="3"/></g>
+  </svg>`;
   const $ = (id) => document.getElementById(id);
   const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const fmt = (n) => Math.floor(n).toLocaleString("en-US");
@@ -83,14 +112,15 @@
     el.className = "lane";
     el.style.top = i * 200 + "px";
     el.style.setProperty("--c", COL[i][0]); el.style.setProperty("--c2", COL[i][1]);
-    el.innerHTML = `<div class="badge" style="background:${COL[i][0]}">${i + 1}</div><div class="crown">👑</div>
+    const flag = cfg.imgs[i] || cfg.flags[i];
+    if (!flag) el.classList.add("noflag");
+    el.innerHTML = `<div class="badge">${i + 1}</div><div class="crown">👑</div>${flag ? '<img class="flag" alt="">' : ""}
       <div class="tname"></div><div class="members">👥 <span class="mc">0</span></div><div class="pts">0</div>
-      <div class="track"><div class="fill"></div><div class="flash"></div><div class="finish"></div></div>
-      <div class="runner"></div>`;
+      <div class="road"><div class="fill"></div><div class="dash"></div><div class="flash"></div><div class="finish"></div></div>
+      <div class="car">${carSvg(i, flag)}</div>`;
     el.querySelector(".tname").textContent = name;
-    const runner = el.querySelector(".runner");
-    if (cfg.imgs[i]) { const img = document.createElement("img"); img.src = cfg.imgs[i]; img.alt = ""; img.onerror = () => { img.remove(); runner.textContent = i + 1; }; runner.appendChild(img); }
-    else runner.textContent = i + 1;
+    if (flag) el.querySelector(".flag").src = flag;
+    const runner = el.querySelector(".car");
     $("lanes").appendChild(el);
     return { el, runner, fill: el.querySelector(".fill"), flash: el.querySelector(".flash"), pts: el.querySelector(".pts"), mc: el.querySelector(".mc") };
   });
@@ -106,7 +136,7 @@
     lanes.forEach((l, i) => {
       const p = progress(i);
       l.fill.style.width = (p * 100).toFixed(2) + "%";
-      l.runner.style.right = (p * (900 - 104)).toFixed(1) + "px";
+      l.runner.style.right = (p * (900 - CAR_W)).toFixed(1) + "px";
       l.pts.textContent = fmt(pts[i]);
       l.mc.textContent = teamSize(i);
       l.el.classList.toggle("lead", max > 0 && leaders === 1 && pts[i] === max);
@@ -115,7 +145,7 @@
   }
   function drawRules() {
     $("rules").innerHTML = cfg.goal > 0
-      ? `🎯 הראשונים ל־<b class="ltr">${fmt(cfg.goal)}</b> מנצחים · 🎁 מתנה = נקודות`
+      ? `🏁 הראשונים ל־<b class="ltr">${fmt(cfg.goal)}</b> מנצחים · 🎁 מתנה = נקודות`
       : `⏱ המובילים בסוף הזמן מנצחים · 🎁 מתנה = נקודות`;
     const r = $("rules"); r.style.fontSize = "40px";
     for (let fs = 40; fs > 28 && r.scrollWidth > r.clientWidth; fs -= 2) r.style.fontSize = fs + "px";
@@ -123,15 +153,16 @@
 
   /* ---------- effects ---------- */
   function bump(i, strong) {
-    anim(lanes[i].runner, [{ transform: "scale(1)" }, { transform: `scale(${strong ? 1.3 : 1.15})` }, { transform: "scale(1)" }], { duration: 220, easing: "ease-out" });
+    anim(lanes[i].runner, [{ transform: "translateX(0) scale(1)" }, { transform: `translateX(${strong ? -26 : -12}px) scale(${strong ? 1.12 : 1.05})` }, { transform: "translateX(0) scale(1)" }], { duration: 260, easing: "ease-out" });
+    anim(lanes[i].runner.querySelector(".flame"), [{ opacity: 1 }, { opacity: 0 }], { duration: strong ? 600 : 300, easing: "ease-out" });
     anim(lanes[i].flash, [{ opacity: 0.5 }, { opacity: 0 }], { duration: 350, easing: "ease-out" });
   }
   function shake(el, amp = 14) {
     anim(el, [{ transform: "translate(0,0)" }, { transform: `translate(${-amp}px,${amp / 2}px)` }, { transform: `translate(${amp - 2}px,${-amp / 2}px)` },
       { transform: `translate(${-amp / 2}px,4px)` }, { transform: "translate(0,0)" }], { duration: 220 });
   }
-  const laneY = (i) => 448 + i * 200 + 134; // centre of the runner
-  const runnerX = (i) => 40 + 900 - progress(i) * (900 - 104) - 52;
+  const laneY = (i) => 448 + i * 200 + 138; // centre of the car
+  const runnerX = (i) => 40 + 900 - progress(i) * (900 - CAR_W) - CAR_W / 2;
   let lastFly = 0;
   function flyVote(i) {
     const now = Date.now();
@@ -224,10 +255,11 @@
   const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   function drawClock() {
+    document.body.classList.toggle("racing", round.running && !round.ended);
     const el = $("clock");
     const useTimer = timer.duration > 0;
     el.classList.toggle("goal", !useTimer);
-    $("clockText").textContent = useTimer ? (round.ended ? "0:00" : mmss(Math.ceil(timer.remaining))) : `🎯 ${fmt(cfg.goal)}`;
+    $("clockText").textContent = useTimer ? (round.ended ? "0:00" : mmss(Math.ceil(timer.remaining))) : `🏁 ${fmt(cfg.goal)}`;
     el.classList.toggle("hidden", !useTimer && cfg.goal <= 0);
     el.classList.toggle("paused", !round.running && !round.ended);
     el.classList.toggle("urgent", useTimer && round.running && timer.remaining <= 10);
@@ -313,9 +345,11 @@
       $("winMvp").textContent = "";
     } else {
       w.style.setProperty("--c", COL[winner][0]);
-      $("winCup").textContent = "🏆";
-      $("winName").textContent = `${cfg.names[winner]} ניצחו!`;
-      $("winScore").innerHTML = `<span class="ltr">${fmt(pts[winner])}</span> נקודות`;
+      const wf = cfg.imgs[winner] || cfg.flags[winner];
+      $("winCup").replaceChildren();
+      if (wf) { const img = document.createElement("img"); img.src = wf; img.alt = ""; $("winCup").appendChild(img); } else $("winCup").textContent = "🏆";
+      $("winName").textContent = `🏆 ${cfg.names[winner]}`;
+      $("winScore").innerHTML = `🏁 ראשונים בקו הסיום · <span class="ltr">${fmt(pts[winner])}</span> נקודות`;
       let mvp = null;
       contrib.forEach((c) => { if (c.team === winner && (!mvp || c.pts > mvp.pts)) mvp = c; });
       $("winMvp").innerHTML = mvp ? `⭐ MVP: ${esc(mvp.name)} <span class="ltr">+${fmt(mvp.pts)}</span>` : "";
