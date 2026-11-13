@@ -79,3 +79,7 @@ body.toasting #rules { opacity: 0; }
 @keyframes road { to { background-position: -64px 0; } }
 @keyframes spin { to { transform: rotate(-360deg); } }
 @keyframes flame { from { transform: scaleX(.7); } to { transform: scaleX(1.15); } }
+
+/* English: names and the toast read left-to-right */
+body.lang-en .lane .tname, body.lang-en .lane .meta, body.lang-en #btoast, body.lang-en #rules, body.lang-en .hdr, body.lang-en #win .he { direction: ltr; }
+body.lang-en .lane .tname, body.lang-en .lane .meta { text-align: right; justify-content: flex-end; }

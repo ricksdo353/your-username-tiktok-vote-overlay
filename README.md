@@ -319,22 +319,23 @@ your own LIVE chat:
 # 🏎️ Country car race (10 countries)
 
 A second board with its own link: **`battle.html`**. Ten cars race to the finish line.
+The board's text is in **English**; add `?lang=he` to the link for Hebrew.
 Each country has a number, a flag, a car in its colors, and **its own gift**. All ten gifts are
 popular **1-coin** gifts, checked on the [Israel gift list](https://streamtoearn.io/gifts?region=IL),
 and every one of them = **1 point** for its country (a streak of 5 = 5 points):
 
 | # | Country | Gift (1 coin) |
 |---|---|---|
-| 1 | ישראל 🇮🇱 | Rose |
-| 2 | פלסטין 🇵🇸 | TikTok |
-| 3 | ארה״ב 🇺🇸 | GG |
-| 4 | איראן 🇮🇷 | Ice Cream Cone |
-| 5 | רוסיה 🇷🇺 | Cake Slice |
-| 6 | אוקראינה 🇺🇦 | Glow Stick |
-| 7 | מרוקו 🇲🇦 | Thumbs Up |
-| 8 | מצרים 🇪🇬 | Heart |
-| 9 | טורקיה 🇹🇷 | Love you |
-| 10 | סעודיה 🇸🇦 | Blow a kiss |
+| 1 | Israel 🇮🇱 | Rose |
+| 2 | Palestine 🇵🇸 | TikTok |
+| 3 | USA 🇺🇸 | GG |
+| 4 | Iran 🇮🇷 | Ice Cream Cone |
+| 5 | Russia 🇷🇺 | Cake Slice |
+| 6 | Ukraine 🇺🇦 | Glow Stick |
+| 7 | Morocco 🇲🇦 | Thumbs Up |
+| 8 | Egypt 🇪🇬 | Heart |
+| 9 | Turkey 🇹🇷 | Love you |
+| 10 | Saudi Arabia 🇸🇦 | Blow a kiss |
 
 **How viewers play**
 1. Comment **1**–**10** to join a country, or just send a country's gift (that joins them too).
@@ -356,8 +357,9 @@ Add settings to the end of the link, starting with `?` and joined with `&`. Exam
 
 | Setting | Example | What it does |
 |---|---|---|
+| `lang` | `lang=he` | Board language: English (default) or Hebrew |
 | `teams` | `teams=4` | How many countries race, 2–10 (the first ones in the table) |
-| `t1`…`t10` | `t5=צרפת` | Rename a country. A renamed one has no flag unless you add `flagN` |
+| `t1`…`t10` | `t5=France` | Rename a country. A renamed one has no flag unless you add `flagN` |
 | `flag1`…`flag10` | `flag5=https://…/fr.svg` | Flag picture (`flag5=none` hides it) |
 | `gift1`…`gift10` | `gift5=Finger Heart` | Change a country's gift (`gift5=none` = no gift) |
 | `giftImg1`…`giftImg10` | `giftImg5=https://…/gift.png` | Picture for a changed gift |

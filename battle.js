@@ -10,8 +10,9 @@
 
    URL parameters (all optional):
    teams              how many countries race, 2-10 (default 10, in the order below)
-   t1 … t10           names (default ישראל, פלסטין, ארה״ב, איראן, רוסיה, אוקראינה,
-                      מרוקו, מצרים, טורקיה, סעודיה)
+   lang               board language: English (default) or lang=he for Hebrew
+   t1 … t10           names (default Israel, Palestine, USA, Iran, Russia, Ukraine,
+                      Morocco, Egypt, Turkey, Saudi Arabia)
    flag1 … flag10     flag picture for a country (flagN=none hides it); a renamed
                       country has no flag unless you give one
    gift1 … gift10     gift name(s) for a country, comma separated (giftN=none = no gift)
@@ -34,6 +35,30 @@
 (() => {
   const P = new URLSearchParams(location.search);
   const num = (v, def = 0) => { const n = Number(v); return Number.isFinite(n) ? n : def; };
+  // Board language: English by default, lang=he for Hebrew
+  const HE = P.get("lang") === "he";
+  const T = HE ? {
+    names: ["ישראל", "פלסטין", "ארה״ב", "איראן", "רוסיה", "אוקראינה", "מרוקו", "מצרים", "טורקיה", "סעודיה"],
+    title: `🏁 מרוץ <span class="grad">מדינות</span>`,
+    hint: (n) => `כתבו <span class="grad ltr">1–${n}</span> או שלחו מתנה`,
+    rulesGoal: (g) => `🏁 הראשונים ל־<b class="ltr">${g}</b> מנצחים · 🎁 כל מתנה = נקודה למדינה שלה`,
+    rulesTime: `⏱ המובילים בסוף הזמן מנצחים · 🎁 כל מתנה = נקודה למדינה שלה`,
+    to: (name) => "ל" + name,
+    tie: "תיקו!", none: "אין מנצחים",
+    won: (p) => `🏁 ראשונים בקו הסיום · <span class="ltr">${p}</span> נקודות`,
+    next: (s) => `מרוץ חדש בעוד ${s}`,
+  } : {
+    names: ["Israel", "Palestine", "USA", "Iran", "Russia", "Ukraine", "Morocco", "Egypt", "Turkey", "Saudi Arabia"],
+    title: `🏁 Country <span class="grad">Race</span>`,
+    hint: (n) => `Comment <span class="grad ltr">1–${n}</span> or send a gift`,
+    rulesGoal: (g) => `🏁 First to <b class="ltr">${g}</b> wins · 🎁 Each gift = 1 point for its country`,
+    rulesTime: `⏱ Leader at the end wins · 🎁 Each gift = 1 point for its country`,
+    to: (name) => name,
+    tie: "Tie!", none: "No winner",
+    won: (p) => `🏁 First to the finish · <span class="ltr">${p}</span> points`,
+    next: (s) => `New race in ${s}`,
+  };
+  if (!HE) { document.documentElement.lang = "en"; document.body.classList.add("lang-en"); }
   const giftKey = (g) => String(g || "").toLowerCase().replace(/[’`]/g, "'").replace(/\s+/g, " ").trim();
 
   // Default countries: flag (images/flags), 1-coin gift (images/gifts), car colours
@@ -55,7 +80,7 @@
     const fp = P.get("flag" + k), gp = P.get("gift" + k);
     const gifts = gp === "none" ? [] : (gp ? gp.split(",") : [gift]).map(giftKey).filter(Boolean);
     return {
-      name: P.get("t" + k) || name,
+      name: P.get("t" + k) || T.names[i],
       flag: fp === "none" ? "" : fp || (renamed ? "" : `images/flags/${flag}.svg`),
       gifts,
       giftLabel: gp === "none" ? "" : gp ? gp.split(",")[0].trim() : gift,
@@ -107,7 +132,15 @@
       $("dots").appendChild(d);
     }
   })();
-  $("hint").innerHTML = `כתבו <span class="grad ltr">1–${N}</span> או שלחו מתנה`;
+  $("title").innerHTML = T.title;
+  $("hint").innerHTML = T.hint(N);
+  // shrink a one-line text until it fits its box
+  function fitText(el, max, min) {
+    el.style.whiteSpace = "nowrap"; el.style.fontSize = max + "px";
+    for (let fs = max; fs > min && el.scrollWidth > el.clientWidth + 1; fs -= 2) el.style.fontSize = fs + "px";
+  }
+  $("title").style.padding = $("hint").style.padding = "0 40px";
+  fitText($("title"), 86, 50); fitText($("hint"), 86, 50);
   setInterval(() => { $("title").classList.toggle("off"); $("hint").classList.toggle("off"); }, 5000);
 
   /* ---------- lanes ---------- */
@@ -142,6 +175,7 @@
       <div class="road"><div class="fill"></div><div class="dash"></div><div class="flash"></div><div class="finish"></div></div>
       <div class="car">${carSvg(i, t.flag)}</div>`;
     el.querySelector(".tname").textContent = t.name;
+    requestAnimationFrame(() => fitText(el.querySelector(".tname"), 34, 22));
     el.querySelector(".gname").textContent = t.giftImg ? "" : t.giftLabel ? "🎁 " + t.giftLabel : "";
     if (t.flag) el.querySelector(".flag").src = t.flag;
     if (t.giftImg) { const g = el.querySelector(".gift"); g.src = t.giftImg; g.onerror = () => { g.remove(); el.querySelector(".gname").textContent = "🎁 " + t.giftLabel; }; }
@@ -169,8 +203,8 @@
   }
   function drawRules() {
     $("rules").innerHTML = cfg.goal > 0
-      ? `🏁 הראשונים ל־<b class="ltr">${fmt(cfg.goal)}</b> מנצחים · 🎁 כל מתנה = נקודה למדינה שלה`
-      : `⏱ המובילים בסוף הזמן מנצחים · 🎁 כל מתנה = נקודה למדינה שלה`;
+      ? T.rulesGoal(fmt(cfg.goal))
+      : T.rulesTime;
     const r = $("rules"); r.style.fontSize = "38px";
     for (let fs = 38; fs > 26 && r.scrollWidth > r.clientWidth; fs -= 2) r.style.fontSize = fs + "px";
   }
@@ -223,7 +257,7 @@
     t.style.background = `radial-gradient(circle at 50% 45%, ${TEAMS[i].c[0]}, ${TEAMS[i].c[1]} 45%, #07031a 80%)`;
     $("tkVal").textContent = "+" + fmt(n);
     $("tkImg").src = icon || ""; $("tkImg").style.visibility = icon ? "visible" : "hidden";
-    $("tkName").textContent = "ל" + TEAMS[i].name;
+    $("tkName").textContent = T.to(TEAMS[i].name);
     anim(t, [{ opacity: 0 }, { opacity: 1, offset: 0.1 }, { opacity: 1, offset: 0.85 }, { opacity: 0 }], { duration: 950, easing: "linear" });
     anim($("tkImg"), [{ transform: "scale(.3) rotate(-12deg)" }, { transform: "scale(1.12) rotate(0)", offset: 0.25 }, { transform: "scale(1)", offset: 0.7 }, { transform: "translateY(330px) scale(.2)" }], { duration: 950, easing: "ease-out" });
     anim($("tkVal"), [{ transform: "scale(2)" }, { transform: "scale(1)", offset: 0.2 }, { transform: "scale(1)" }], { duration: 950 });
@@ -367,7 +401,7 @@
     if (winner === undefined) {
       w.style.setProperty("--c", "#8a3dff");
       $("winCup").textContent = "🤝";
-      $("winName").textContent = max > 0 ? "תיקו!" : "אין מנצחים";
+      $("winName").textContent = max > 0 ? T.tie : T.none;
       $("winScore").textContent = max > 0 ? tops.map((i) => TEAMS[i].name).join(" · ") : "";
       $("winMvp").textContent = "";
     } else {
@@ -375,7 +409,7 @@
       w.style.setProperty("--c", t.c[0]);
       if (t.flag) { const img = document.createElement("img"); img.src = t.flag; img.alt = ""; $("winCup").appendChild(img); } else $("winCup").textContent = "🏆";
       $("winName").textContent = `🏆 ${t.name}`;
-      $("winScore").innerHTML = `🏁 ראשונים בקו הסיום · <span class="ltr">${fmt(pts[winner])}</span> נקודות`;
+      $("winScore").innerHTML = T.won(fmt(pts[winner]));
       let mvp = null;
       contrib.forEach((c) => { if (c.team === winner && (!mvp || c.pts > mvp.pts)) mvp = c; });
       $("winMvp").innerHTML = mvp ? `⭐ MVP: ${esc(mvp.name)} <span class="ltr">+${fmt(mvp.pts)}</span>` : "";
@@ -387,7 +421,7 @@
     clearTimeout(nextId); clearInterval(nextTick);
     if (cfg.next > 0) {
       let left = cfg.next;
-      const show = () => ($("winNext").textContent = `מרוץ חדש בעוד ${left}`);
+      const show = () => ($("winNext").textContent = T.next(left));
       show();
       nextTick = setInterval(() => { left = Math.max(0, left - 1); show(); }, 1000);
       nextId = setTimeout(() => { clearInterval(nextTick); reset(); start(); }, cfg.next * 1000);
@@ -466,7 +500,7 @@
       const count = Math.max(1, Math.floor(num(pick(d.repeatCount, d.repeat_count, d.comboCount), 1)));
       const n = Math.max(1, Math.round(each * count * cfg.giftMult));
       chatChip(user, i, icon);
-      toast(`${icon ? "" : "🎁 "}<b class="ltr">+${fmt(n)}</b> ל${esc(TEAMS[i].name)}`, i, icon);
+      toast(`${icon ? "" : "🎁 "}<b class="ltr">+${fmt(n)}</b> ${esc(T.to(TEAMS[i].name))}`, i, icon);
       flyGift(i, icon);
       if (each >= cfg.bigGift || n >= cfg.bigGift) takeover(i, icon, n);
       add(i, n, user, id);
