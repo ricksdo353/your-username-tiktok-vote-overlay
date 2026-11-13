@@ -35,14 +35,19 @@
     listen(topic, onCmd, onStatus) {
       const seen = new Set(), up = {};
       const report = () => onStatus && onStatus(Object.values(up).some(Boolean));
+      // tell the control panel "a board is here" (heartbeat) and "I ran command X" (ack)
+      const pub = (sub, msg) => getClients().forEach((c) => { if (c.connected) c.publish(mtopic(topic) + "/" + sub, msg, { qos: 0 }); });
+      const beat = () => pub("hb", JSON.stringify({ t: Date.now(), page: location.pathname.split("/").pop() || "index.html" }));
+      setInterval(beat, 4000);
       const deliver = (raw, fallbackId) => {
         const m = parse(raw), key = m.id || (fallbackId ? "n:" + fallbackId : null);
         if (key) { if (seen.has(key)) return; seen.add(key); if (seen.size > 500) seen.delete(seen.values().next().value); }
         onCmd(m.cmd);
+        if (m.id) pub("ack", m.id);
       };
       getClients().forEach((c, k) => {
         up["m" + k] = false;
-        c.on("connect", () => { up["m" + k] = true; c.subscribe(mtopic(topic)); report(); });
+        c.on("connect", () => { up["m" + k] = true; c.subscribe(mtopic(topic)); report(); beat(); });
         c.on("close", () => { up["m" + k] = false; report(); });
         c.on("message", (t, payload) => { if (t === mtopic(topic)) deliver(payload.toString(), null); });
       });
@@ -60,8 +65,9 @@
       report();
     },
     // resolves "ok" as soon as one route accepted the command, otherwise "limit" (ntfy quota, nothing else worked) or "fail"
-    send(topic, cmd) {
-      const payload = newId() + "|" + cmd;
+    send(topic, cmd, onId) {
+      const id = newId(), payload = id + "|" + cmd;
+      if (onId) onId(id);
       const tries = [];
       getClients().forEach((c) => tries.push(new Promise((res) => {
         const go = () => c.publish(mtopic(topic), payload, { qos: 0 }, (err) => res(err ? "fail" : "ok"));
@@ -81,6 +87,24 @@
         }));
       });
     },
+    // control panel: follow a room's board. onBeat(info) on each heartbeat, onAck(id) when the board ran a command.
+    // mqttUp() says whether this panel can see the relay at all (if not, board status is unknown).
+    watch(topic, onBeat, onAck) {
+      const hb = mtopic(topic) + "/hb", ack = mtopic(topic) + "/ack";
+      getClients().forEach((c) => {
+        const sub = () => c.subscribe([hb, ack]);
+        if (c.connected) sub();
+        c.on("connect", sub);
+        c.on("message", (t, payload) => {
+          if (t === hb) { try { onBeat(JSON.parse(payload.toString())); } catch (_) { onBeat({}); } }
+          else if (t === ack) onAck(payload.toString());
+        });
+      });
+    },
+    unwatch(topic) {
+      getClients().forEach((c) => { try { c.unsubscribe([mtopic(topic) + "/hb", mtopic(topic) + "/ack"]); } catch (_) {} });
+    },
+    mqttUp() { return getClients().some((c) => c.connected); },
     // open the connections early (control panels call this on load so the first tap is fast)
     warm() { getClients(); },
   };

@@ -66,12 +66,18 @@
     .room { direction: ltr; font-family: ui-monospace, Consolas, monospace; }
     small { color: var(--muted); }
     code { direction: ltr; unicode-bidi: embed; background: #0e0b2a; padding: 2px 6px; border-radius: 6px; }
+    .bstat { border-radius: 14px; padding: 12px 14px; font-weight: 800; text-align: center; border: 1px solid var(--line); }
+    .bstat.ok { background: #12402c; border-color: #2fbf71; }
+    .bstat.bad { background: #4a1426; border-color: #ff4d6d; }
+    .bstat.wait { background: #2a2360; }
+    .bstat small { display: block; font-weight: 500; margin-top: 4px; color: #e6e1ff; }
   </style>
 </head>
 <body>
 <main>
   <h1>🎮 לוח שליטה</h1>
   <p class="sub">שולט ב-overlay שבלייב, מהמחשב או מהטלפון</p>
+  <div id="boardStat" class="bstat wait">⏳ בודק אם לוח ההצבעה מחובר…</div>
 
   <!-- Round -->
   <section>
@@ -149,8 +155,8 @@
 </main>
 <div id="toast"></div>
 
-<script src="lib/mqtt.min.js"></script>
-<script src="relay.js"></script>
+<script src="lib/mqtt.min.js?v=202611131247"></script>
+<script src="relay.js?v=202611131247"></script>
 <script>
 (() => {
   const P = new URLSearchParams(location.search);
@@ -240,12 +246,47 @@
   $("copyPanel").onclick = () => copy(panelLink());
 
   // ----- send commands -----
+  // ----- is the board connected? (heartbeat) and did it run the command? (ack) -----
+  const PREFIX = "tvo-";
+  let lastBeat = 0, watching = "";
+  const pendingAcks = new Map();
+  function follow() {
+    if (watching === room) return;
+    if (watching) window.Relay.unwatch(PREFIX + watching);
+    watching = room; lastBeat = 0;
+    if (!room) return;
+    window.Relay.watch(PREFIX + room, () => { lastBeat = Date.now(); drawStat(); },
+      (id) => { const cb = pendingAcks.get(id); if (cb) { pendingAcks.delete(id); cb(); } });
+  }
+  function drawStat() {
+    const el = $("boardStat");
+    if (!room) { el.className = "bstat bad"; el.innerHTML = "🔴 חסר שם חדר"; return; }
+    if (Date.now() - lastBeat < 12000) { el.className = "bstat ok"; el.innerHTML = "🟢 לוח ההצבעה מחובר לחדר הזה"; return; }
+    if (!window.Relay.mqttUp()) { el.className = "bstat wait"; el.innerHTML = "⏳ מתחבר…<small>אם זה נשאר ככה, הרשת של הטלפון חוסמת את הבדיקה. נסה Wi-Fi.</small>"; return; }
+    el.className = "bstat bad";
+    el.innerHTML = "🔴 אין לוח ההצבעה בחדר <span class=\"room\">" + room + "</span>" +
+      "<small>ב-LIVE Studio: לחץ ימני על המקור ← Refresh. אם עדיין אדום: העתק את הקישור מה-LIVE Studio והדבק אותו כאן למטה בחיבור, כדי שהחדרים יתאימו.</small>";
+  }
+  follow(); setInterval(() => { follow(); drawStat(); }, 1000);
+
   async function send(cmd) {
     if (!room) return toast("חסר שם חדר", true);
-    const r = await window.Relay.send("tvo-" + room, cmd);
-    if (r === "ok") toast("נשלח ✓");
-    else if (r === "limit") toast("השליחה נכשלה (גם ntfy.sh הגיע למגבלה היומית). השתמש במקלדת או בפקודות צ'אט", true);
-    else toast("השליחה נכשלה, בדוק את החיבור לאינטרנט", true);
+    let acked = false, sentId = null;
+    const r = await window.Relay.send(PREFIX + room, cmd, (id) => {
+      sentId = id;
+      pendingAcks.set(id, () => { acked = true; toast("הלוח קיבל ✓"); });
+    });
+    if (acked) return;
+    if (r === "limit") toast("השליחה נכשלה (גם ntfy.sh הגיע למגבלה היומית). השתמש במקלדת או בפקודות צ'אט", true);
+    else if (r !== "ok") toast("השליחה נכשלה, בדוק את החיבור לאינטרנט", true);
+    else {
+      toast("נשלח… מחכה שהלוח יאשר");
+      setTimeout(() => {
+        if (acked || !pendingAcks.has(sentId)) return;
+        pendingAcks.delete(sentId);
+        toast(Date.now() - lastBeat < 12000 ? "נשלח, אבל הלוח לא אישר. נסה שוב" : "הלוח לא קיבל: הוא לא מחובר לחדר הזה (ראה למעלה)", true);
+      }, 5000);
+    }
   }
   window.Relay.warm();
 
