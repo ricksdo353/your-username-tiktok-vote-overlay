@@ -36,6 +36,8 @@
                       Omit for no timer. When it hits 0, voting locks and
                       the winner is shown.
    autostart=0        don't start the timer on load (press T to start)
+   next               seconds the winner stays on screen before the scores reset
+                      to 0 and a new round starts by itself (default 15; next=0 = off)
 
    Keyboard (when the overlay window is focused):
    1 / 2 = +1 vote,  Shift+1 / Shift+2 = +10,  R = reset,  D = toggle demo
@@ -68,6 +70,7 @@
     bigGift: parseInt(P.get("bigGift") || "100", 10), // gifts worth this many coins or more get a full-screen takeover
     takeover: P.get("takeover") !== "0",
     countdown: P.get("countdown") !== "0",           // big 3-2-1 at the end of a round
+    next: Math.max(0, parseInt(P.get("next") ?? "15", 10) || 0), // auto reset + new round after the winner (s)
   };
 
   const $ = (id) => document.getElementById(id);
@@ -305,6 +308,7 @@
     remaining: 0, running: false, ended: false, endAt: 0, tickId: null,
   };
   timer.remaining = timer.duration;
+  let nextRoundId = null; // pending automatic next round
 
   const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
@@ -344,6 +348,7 @@
   function startTimer(seconds) {
     if (seconds > 0) timer.duration = seconds; // ignore missing/invalid times
     if (timer.duration <= 0) return;
+    clearTimeout(nextRoundId);
     timer.remaining = timer.duration;
     timer.ended = false;
     $("winner").classList.add("hidden");
@@ -402,6 +407,11 @@
     w.style.animation = "none"; void w.offsetWidth; w.style.animation = "";
     shake($("stage"), 22);
     drawTimer();
+    // after showing the winner, reset to 0:0 and start the next round by itself
+    clearTimeout(nextRoundId);
+    if (cfg.next > 0 && timer.duration > 0) {
+      nextRoundId = setTimeout(() => { reset(); startTimer(); }, cfg.next * 1000);
+    }
   }
 
   function add(side, n = 1, label, icon) {
@@ -414,6 +424,7 @@
   }
 
   function reset() {
+    clearTimeout(nextRoundId);
     state.a = state.b = 0;
     likeCarry.a = likeCarry.b = 0;
     lastVote.clear();

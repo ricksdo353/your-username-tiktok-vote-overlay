@@ -320,7 +320,7 @@ your own LIVE chat:
 3. ☐ Check the overlay corner says **● connected**.
 4. ☐ Tell viewers: *"Comment **1** for Goku, **2** for Naruto, gifts are bonus votes!"*
 5. ☐ Open the **control panel** and press **▶ התחל סבב** (or the timer starts by itself
-   if your link has no `autostart=0`). At **0:00** voting locks and the winner is shown 🏆
+   if your link has no `autostart=0`). At **0:00** voting locks and the winner is shown 🏆 After 15 seconds the scores go back to 0 and the next round starts by itself (change with `next=`).
 6. ☐ Next round: **↺ איפוס** then **▶ התחל סבב** in the control panel.
 
 No control panel? Use the [keyboard](#keyboard-controls) (OBS: right-click the source →
@@ -352,6 +352,7 @@ Add any of these to your link with `&`.
 |---|---|---|
 | `timer` | `timer=90` or `timer=2:30` | Round length in seconds or minutes:seconds. No setting = no timer |
 | `autostart` | `autostart=0` | Don't start the timer automatically (press `T` to start) |
+| `next` | `next=30` | Seconds the winner stays on screen before the scores reset to 0 and a new round starts by itself (default `15`, `next=0` = off, wait for you) |
 
 **Votes**
 
