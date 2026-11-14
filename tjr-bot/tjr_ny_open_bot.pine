@@ -11,15 +11,16 @@ strategy("TJR Session Bot (MNQ + GBPJPY)", overlay = true, pyramiding = 0,
 
 // ───────────────────────── Inputs ─────────────────────────
 grpT = "Time (Israel)"
-preset     = input.string("MNQ / NQ (16:30-17:30)", "Market preset", group = grpT,
-     options = ["MNQ / NQ (16:30-17:30)", "GBPJPY (10:00-12:00)", "Custom (use inputs below)"],
+preset     = input.string("MNQ Lucid payout (16:30-17:30)", "Market preset", group = grpT,
+     options = ["MNQ Lucid payout (16:30-17:30)", "MNQ / NQ (16:30-17:30)", "GBPJPY (10:00-12:00)", "Custom (use inputs below)"],
      tooltip = "Presets set the window, sweep window, FVG size, stop buffer, max stop and which session levels are used. Custom uses the inputs below.")
 tradeSess  = input.session("1630-1730", "Trading window (entries only)", group = grpT)
 sweepSess  = input.session("1600-1730", "Sweeps count from", group = grpT,
      tooltip = "A liquidity sweep inside this window can start a setup. Entries still only happen in the trading window.")
 flattenEnd = input.bool(true, "Close any open trade when the window ends", group = grpT)
 tzIL = "Asia/Jerusalem"
-isNQ = preset == "MNQ / NQ (16:30-17:30)"
+isLucid = preset == "MNQ Lucid payout (16:30-17:30)"
+isNQ = isLucid or preset == "MNQ / NQ (16:30-17:30)"
 isGJ = preset == "GBPJPY (10:00-12:00)"
 
 grpQ = "Quality filters"
@@ -35,12 +36,13 @@ smtLen     = input.int(20, "SMT lookback (bars)", minval = 5, group = grpQ)
 
 grpR = "Risk"
 entryMode  = input.string("FVG edge", "Entry price", options = ["FVG edge", "FVG 50% (CE)"], group = grpR)
+targetMode = input.string("Next liquidity", "Target", options = ["Next liquidity", "Fixed R"], group = grpR)
 minRR      = input.float(2.0, "Minimum reward:risk to target", minval = 1.0, step = 0.25, group = grpR)
 maxRR      = input.float(6.0, "Skip if nearest liquidity target is beyond (R)", minval = 2.0, step = 0.5, group = grpR)
 stopBufTk  = input.int(4, "Stop buffer beyond sweep (ticks)", minval = 0, group = grpR)
 maxStopPts = input.float(40, "Max stop size (points)", minval = 1, group = grpR)
 riskUsd    = input.float(200, "Risk per trade ($)", minval = 1, group = grpR)
-maxQty     = input.int(5, "Max contracts (futures) / lots (forex)", minval = 1, group = grpR)
+maxQty     = input.int(10, "Max contracts (futures) / lots (forex)", minval = 1, group = grpR)
 maxTrades  = input.int(2, "Max trades per day (this chart)", minval = 1, maxval = 5, group = grpR,
      tooltip = "Each chart counts its own trades. For 3 a day in total: GBPJPY chart 2 + MNQ chart 1.")
 fillBars   = input.int(10, "Cancel unfilled limit after (bars)", minval = 1, group = grpR)
@@ -52,10 +54,14 @@ alertTicker = alertTickerIn != "" ? alertTickerIn : isGJ ? "GBPJPY" : isNQ ? "MN
 // ───────────────────────── Preset values ─────────────────────────
 tradeSessE = isNQ ? "1630-1730" : isGJ ? "1000-1200" : tradeSess
 sweepSessE = isNQ ? "1600-1730" : isGJ ? "0930-1200" : sweepSess
-minFvgPx   = isNQ ? 2.0  : isGJ ? 0.010 : minFvgTk * syminfo.mintick
+minFvgPx   = isNQ ? close * 0.0001 : isGJ ? 0.010 : minFvgTk * syminfo.mintick
 stopBufPx  = isNQ ? 1.0  : isGJ ? 0.005 : stopBufTk * syminfo.mintick
-maxStopPx  = isNQ ? 40.0 : isGJ ? 0.25  : maxStopPts
+maxStopPx  = isNQ ? close * 0.003  : isGJ ? 0.25  : maxStopPts
 useLondon  = not isGJ      // London is still forming during the GBPJPY window
+// Lucid payout preset: no HTF filter (grade B), fixed 1R target -> more trades, higher hit rate
+minGradeE  = isLucid ? "B" : minGrade
+fixedR     = isLucid or targetMode == "Fixed R"
+minRRE     = isLucid ? 1.0 : minRR
 
 // ───────────────────────── Time ─────────────────────────
 inWin    = not na(time(timeframe.period, tradeSessE, tzIL))
@@ -150,21 +156,25 @@ sslSweep = f_sweptLow(pdl) or f_sweptLow(asiaL) or (useLondon and f_sweptLow(lon
 bslSweep = f_sweptHigh(pdh) or f_sweptHigh(asiaH) or (useLondon and f_sweptHigh(lonH))
 
 f_gradeOk(bool biasOk, bool smtOk) =>
-    minGrade == "B" ? true : minGrade == "A" ? biasOk : biasOk and smtOk
+    minGradeE == "B" ? true : minGradeE == "A" ? biasOk : biasOk and smtOk
 f_gradeTxt(bool biasOk, bool smtOk) =>
     biasOk and smtOk ? "A+" : biasOk ? "A" : "B"
 
 // Nearest liquidity at or beyond minRR
 f_longTarget(float entry, float risk) =>
     float best = na
-    float need = entry + minRR * risk
+    float need = entry + minRRE * risk
+    if fixedR
+        best := need
     for lv in array.from(pdh, asiaH, useLondon ? lonH : na)
         if not na(lv) and lv >= need and (na(best) or lv < best)
             best := lv
     not na(best) and (best - entry) / risk <= maxRR ? best : na
 f_shortTarget(float entry, float risk) =>
     float best = na
-    float need = entry - minRR * risk
+    float need = entry - minRRE * risk
+    if fixedR
+        best := need
     for lv in array.from(pdl, asiaL, useLondon ? lonL : na)
         if not na(lv) and lv <= need and (na(best) or lv > best)
             best := lv

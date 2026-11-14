@@ -23,7 +23,8 @@ CFG = {
 }
 P = dict(disp=1.2, maxSetupB=30, pivLen=2, minRR=2.0, maxRR=6.0, fillBars=10)
 
-def run(name, ohlc, ts, max_trades):
+def run(name, ohlc, ts, max_trades, opt=None):
+    opt = opt or {}; P = {**globals()["P"], **opt}; FIXED = opt.get("fixed", False); BIAS = opt.get("bias", True)
     cfg = CFG[name]; o, h, l, c = ohlc; n = len(o)
     il = ts.tz_convert("Asia/Jerusalem"); ny = ts.tz_convert("America/New_York")
     ilm = np.asarray(il.hour * 60 + il.minute); nym = np.asarray(ny.hour * 60 + ny.minute)
@@ -65,11 +66,13 @@ def run(name, ohlc, ts, max_trades):
     lastPH = pd.Series(np.where(isPH, hc, np.nan)).ffill().to_numpy(); lastPL = pd.Series(np.where(isPL, lc, np.nan)).ffill().to_numpy()
     PHb = pd.Series(np.where(isPH, np.arange(n)-k, np.nan)).ffill().to_numpy(); PLb = pd.Series(np.where(isPL, np.arange(n)-k, np.nan)).ffill().to_numpy()
     h2 = np.r_[np.nan, np.nan, h[:-2]]; l2 = np.r_[np.nan, np.nan, l[:-2]]
-    bullF = (l > h2) & ((l-h2) >= cfg["minFvg"]); bearF = (h < l2) & ((l2-h) >= cfg["minFvg"])
+    mf = c*opt["minFvgPct"]/100 if "minFvgPct" in opt else cfg["minFvg"]
+    bullF = (l > h2) & ((l-h2) >= mf); bearF = (h < l2) & ((l2-h) >= mf)
     sslS = ((l[None] < LL) & (c[None] > LL)).any(0); bslS = ((h[None] > LH) & (c[None] < LH)).any(0)
 
     def target(i, e, r, side):
         lv = LH[:, i] if side > 0 else LL[:, i]; lv = lv[~np.isnan(lv)]
+        if FIXED: return e + side*P["minRR"]*r
         need = e + side*P["minRR"]*r; cand = lv[lv >= need] if side > 0 else lv[lv <= need]
         if not len(cand): return None
         t = cand.min() if side > 0 else cand.max()
@@ -96,7 +99,8 @@ def run(name, ohlc, ts, max_trades):
                         elif s["shift"] and s["fvg"] and inWin[i] and S[-side]["st"] != 2:
                             top, bot = s["fvg"]; e = top if side > 0 else bot
                             stop = s["ext"] - side*cfg["stopBuf"]; r = (e-stop)*side
-                            if 0 < r <= cfg["maxStop"] and ((c[i] > e) if side > 0 else (c[i] < e)) and htf[i] == side:
+                            mx = c[i]*opt["maxStopPct"]/100 if "maxStopPct" in opt else cfg["maxStop"]
+                            if 0 < r <= mx and ((c[i] > e) if side > 0 else (c[i] < e)) and (htf[i] == side or not BIAS):
                                 tp = target(i, e, r, side)
                                 q = min(int(RISK // (r*cfg["pv"])), 5) if cfg["int_size"] else 1
                                 if tp is not None and q >= 1: s.update(st=2, e=e, stop=stop, tp=tp, q=q, arm=i)
