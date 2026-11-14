@@ -41,7 +41,8 @@
    timer              round length: seconds (timer=90) or m:ss (timer=2:30).
                       Omit for no timer. When it hits 0, voting locks and
                       the winner is shown.
-   autostart=0        don't start the timer on load (press T to start)
+   autostart=0        don't start the timer on load (press T to start); the round still starts
+                      by itself on the first vote or gift (voteStart=0 turns that off)
    next               seconds the winner stays on screen before the scores reset
                       to 0 and a new round starts by itself (default 15; next=0 = off)
 
@@ -544,7 +545,12 @@
   // Without a timer, they always count (until reset).
   function votingOpen() {
     if (timer.ended) return false;
-    return timer.duration <= 0 || timer.running;
+    if (timer.duration <= 0 || timer.running) return true;
+    // A round that was never started (e.g. autostart=0 and the control panel didn't reach the board)
+    // starts by itself on the first vote or gift, so comments are never thrown away.
+    // A round paused in the middle stays paused. voteStart=0 turns this off.
+    if (P.get("voteStart") !== "0" && timer.remaining === timer.duration) { startTimer(); return timer.running; }
+    return false;
   }
   const DEBUG = P.get("debug") === "1";
   function debugLog(text, side) { if (DEBUG) feed(text, side || ""); }
