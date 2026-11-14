@@ -157,3 +157,20 @@ body.toasting #thanks, body.ended #thanks { opacity: 0; }
 @keyframes streak-r { from { transform: translateX(-900px); } to { transform: translateX(1700px); } }
 @keyframes streak-l { from { transform: translateX(1700px); } to { transform: translateX(-900px); } }
 @keyframes rise { to { transform: translateY(-620px); } }
+
+/* ===== rules card: shown once at the start of every round (rulesCard=0 turns it off) ===== */
+#rulesCard { left: 70px; top: 520px; width: 940px; padding: 40px 46px 44px; border-radius: 48px; background: rgba(9,6,34,.94);
+  border: 5px solid rgba(255,255,255,.85); box-shadow: 0 0 80px rgba(138,61,255,.7), 0 30px 80px rgba(0,0,0,.6);
+  display: flex; flex-direction: column; gap: 26px; opacity: 0; transform: translateY(60px) scale(.92); pointer-events: none;
+  transition: opacity .35s, transform .45s cubic-bezier(.3,1.5,.5,1); z-index: 20; }
+#rulesCard.show { opacity: 1; transform: none; }
+#rulesCard h2 { margin: 0; text-align: center; font-size: 76px; font-weight: 900; line-height: 1.1; }
+#rulesCard .row { display: flex; align-items: center; gap: 22px; font-size: 46px; font-weight: 800; line-height: 1.2; }
+#rulesCard .row .ic { flex: none; width: 92px; height: 92px; border-radius: 26px; display: flex; align-items: center; justify-content: center;
+  font-size: 58px; background: rgba(255,255,255,.1); }
+#rulesCard .row .ic img { width: 84px; height: 84px; object-fit: contain; }
+#rulesCard .row .tx { flex: 1; min-width: 0; }
+#rulesCard .row .gifts { display: inline-flex; gap: 6px; vertical-align: middle; }
+#rulesCard .row .gifts img { width: 64px; height: 64px; object-fit: contain; }
+#rulesCard b { color: #ffd34d; }
+#rulesCard .sa { color: #9fe4ff; } #rulesCard .sb { color: #e9ccff; }

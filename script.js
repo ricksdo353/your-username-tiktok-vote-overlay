@@ -23,6 +23,7 @@
    thanks=0           turn off the thank-you line for the round's top gifters
    rules=0            turn off the how-to-play reminder every 15 s
    aliasA / aliasB    extra words that count as a vote for side A / B, e.g. aliasA=ביבי,bibi
+   rulesCard=0        turn off the big rules card shown for 8 s at the start of every round
    welcome=180        welcome a viewer who joins (with how to play) at most every N seconds; welcome=0 = off
    voice=0            don't say "thank you <name>" out loud for gifts
    giftMult           votes per diamond (default 1)
@@ -469,7 +470,40 @@
     clearTimeout(infoTimer);
     infoTimer = setTimeout(() => { welcomeName = ""; drawThanks(); }, 8100);
   }
+  // Big rules card for 8 s at the start of every round: how to vote, which gift goes where (with pictures),
+  // how long the round is. Once per round = explaining the game, not asking again and again.
+  let cardTimer = null;
+  function showRulesCard() {
+    if (P.get("rulesCard") === "0") return false;
+    let card = $("rulesCard");
+    if (!card) { card = document.createElement("div"); card.id = "rulesCard"; card.className = "abs he"; $("stage").appendChild(card); }
+    card.replaceChildren();
+    const h = document.createElement("h2"); h.innerHTML = `📜 <span class="grad">איך משחקים</span>`; card.appendChild(h);
+    const row = (icon, build) => {
+      const r = document.createElement("div"); r.className = "row";
+      const ic = document.createElement("div"); ic.className = "ic";
+      if (typeof icon === "string") ic.textContent = icon; else ic.appendChild(icon);
+      const tx = document.createElement("div"); tx.className = "tx"; build(tx);
+      r.append(ic, tx); card.appendChild(r);
+    };
+    const span = (cls, text) => { const s = document.createElement("span"); s.className = cls; s.textContent = text; return s; };
+    row("💬", (tx) => tx.append("כתבו ", span("sa", "1"), " ל", span("sa", cfg.left), " או ", span("sb", "2"), " ל", span("sb", cfg.right)));
+    [["a", cfg.giftA, "sa"], ["b", cfg.giftB, "sb"]].forEach(([side, list, cls]) => {
+      if (!list.length) return;
+      const first = giftIcon(list[0]);
+      let icon = "🎁";
+      if (first) { icon = document.createElement("img"); icon.src = first; icon.alt = list[0]; }
+      const HEB = { rose: "ורד", tiktok: "טיקטוק", "hand heart": "לב בידיים", confetti: "קונפטי" };
+      row(icon, (tx) => { tx.append(list.map((g) => HEB[g.toLowerCase()] || g).join(" / "), " = נקודות ל", span(cls, sideName(side))); });
+    });
+    row("⏱", (tx) => tx.append(timer.duration > 0 ? `סבב של ${Math.round(timer.duration / 60) || 1} דקות, ובסוף מכריזים מנצח` : "מי שמוביל בסוף מנצח"));
+    card.classList.add("show");
+    clearTimeout(cardTimer);
+    cardTimer = setTimeout(() => card.classList.remove("show"), 8000);
+    return true;
+  }
   function showGiftInfo() {
+    if (showRulesCard()) return; // the card already explains the gifts
     if (P.get("giftInfo") === "0") return;
     welcomeName = "";
     infoUntil = Date.now() + 8000;

@@ -218,7 +218,27 @@
   /* The line under the race shows, in turn: a calm one-time note that gifts count (6 s at the start of a race),
      then the rules, alternating with a thank-you to the race's top 3 gifters. No repeating "send gifts" text. */
   let infoUntil = 0, rulesFlip = false;
-  function showGiftInfo() { if (P.get("giftInfo") !== "0") { welcomeName = ""; infoUntil = Date.now() + 6000; drawRules(); setTimeout(drawRules, 6100); } }
+  // Big rules card for 8 s at the start of every race (rulesCard=0 turns it off)
+  let cardTimer = null;
+  function showRulesCard() {
+    if (P.get("rulesCard") === "0") return false;
+    let card = $("rulesCard");
+    if (!card) { card = document.createElement("div"); card.id = "rulesCard"; card.className = "abs"; $("stage").appendChild(card); }
+    card.className = "abs" + (HE ? " he" : "");
+    card.style.direction = HE ? "rtl" : "ltr";
+    const rows = HE
+      ? [["💬", `כתבו מספר <b>1–${N}</b> כדי להצטרף למדינה`], ["🏎️", "כל תגובה מקדמת את המכונית שלכם"], ["🎁", "מתנות נספרות כנקודות למדינה שלכם"],
+         ["🏁", cfg.goal > 0 ? `הראשונים ל־<b>${fmt(cfg.goal)}</b> מנצחים` : "המובילים בסוף הזמן מנצחים"]]
+      : [["💬", `Comment <b>1–${N}</b> to join a country`], ["🏎️", "Every comment moves your car forward"], ["🎁", "Gifts count as points for your country"],
+         ["🏁", cfg.goal > 0 ? `First to <b>${fmt(cfg.goal)}</b> wins` : "The leader at the end wins"]];
+    card.innerHTML = `<h2>📜 <span class="grad">${HE ? "איך משחקים" : "How to play"}</span></h2>` +
+      rows.map(([i, t]) => `<div class="row"><div class="ic">${i}</div><div class="tx">${t}</div></div>`).join("");
+    card.classList.add("show");
+    clearTimeout(cardTimer);
+    cardTimer = setTimeout(() => card.classList.remove("show"), 8000);
+    return true;
+  }
+  function showGiftInfo() { if (showRulesCard()) return; if (P.get("giftInfo") !== "0") { welcomeName = ""; infoUntil = Date.now() + 6000; drawRules(); setTimeout(drawRules, 6100); } }
   // welcome a viewer who joins, with how to play; at most once every 3 minutes (welcome=<s>, welcome=0 = off)
   let welcomeName = "", lastWelcome = 0;
   const WELCOME_GAP = Math.max(0, parseInt(P.get("welcome") ?? "180", 10) || 0) * 1000;
