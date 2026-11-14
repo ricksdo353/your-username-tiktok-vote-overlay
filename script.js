@@ -24,7 +24,8 @@
    rules=0            turn off the how-to-play reminder every 15 s
    aliasA / aliasB    extra words that count as a vote for side A / B, e.g. aliasA=ביבי,bibi
    rulesCard=0        turn off the big rules card shown for 8 s at the start of every round
-   rulesEvery=120     also show the rules card every N seconds during a round (0 = only at the start)
+   rulesEvery=0       also show the rules card every N seconds during a round (default 0 = only at the start;
+                      repeating it every 2 minutes got a TikTok gift-solicitation warning)
    welcome=180        welcome a viewer who joins (with how to play) at most every N seconds; welcome=0 = off
    voice=0            don't say "thank you <name>" out loud for gifts
    giftMult           votes per diamond (default 1)
@@ -506,7 +507,7 @@
   }
   // also show the card every N seconds while a round runs (rulesEvery=120 by default; rulesEvery=0 = only at the start),
   // but not in the last 20 seconds of a round
-  const RULES_EVERY = Math.max(0, parseInt(P.get("rulesEvery") ?? "120", 10) || 0) * 1000;
+  const RULES_EVERY = Math.max(0, parseInt(P.get("rulesEvery") ?? "0", 10) || 0) * 1000; // off by default: repeating the gift card got a TikTok warning
   let lastCard = 0;
   if (RULES_EVERY) setInterval(() => {
     if (!timer.running || timer.ended || (timer.duration > 0 && timer.remaining <= 20)) return;
@@ -547,7 +548,7 @@
     el.replaceChildren();
     if (Date.now() < infoUntil) {
       const map = giftMapParts();
-      if (welcomeName) el.append(`👋 ברוך הבא ${welcomeName}! כתבו 1 או 2`, ...(map.length ? ["  ·  ", ...map] : []));
+      if (welcomeName) el.append(`👋 ברוך הבא ${welcomeName}! כתבו 1 או 2`); // no gifts here: it can repeat during a round
       else if (map.length) el.append("🎁 מתנות נספרות: ", ...map);
       else el.append("🎁 מתנות נספרות כנקודות לצד שבחרתם");
     } else if (Date.now() < ruleUntil) {

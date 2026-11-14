@@ -45,7 +45,7 @@
     rulesTime: `⏱ המובילים בסוף הזמן מנצחים · כתבו את המספר של המדינה שלכם`,
     info: `🎁 מתנות נספרות כנקודות למדינה שלכם`,
     thankOne: (u) => `🙏 תודה ${u}!`,
-    welcome: (u, n) => `👋 ברוך הבא ${u}! כתבו 1–${n} · 🎁 מתנות נספרות למדינה שלכם`,
+    welcome: (u, n) => `👋 ברוך הבא ${u}! כתבו 1–${n} כדי להצטרף`,
     rules: [(n) => `💬 כתבו מספר 1–${n} כדי להצטרף למדינה`, () => `🏎️ כל תגובה מקדמת את המכונית שלכם`, (n, g) => g > 0 ? `🏁 הראשונים ל־${g} מנצחים` : `⏱ המובילים בסוף הזמן מנצחים`],
     thanks: `🙏 תודה ל־`,
     to: (name) => "ל" + name,
@@ -60,7 +60,7 @@
     rulesTime: `⏱ Leader at the end wins · Comment your country's number`,
     info: `🎁 Gifts count as points for your country`,
     thankOne: (u) => `🙏 Thank you ${u}!`,
-    welcome: (u, n) => `👋 Welcome ${u}! Comment 1–${n} · 🎁 Gifts count for your country`,
+    welcome: (u, n) => `👋 Welcome ${u}! Comment 1–${n} to join`,
     rules: [(n) => `💬 Comment 1–${n} to join a country`, () => `🏎️ Every comment moves your car forward`, (n, g) => g > 0 ? `🏁 First to ${g} wins` : `⏱ The leader at the end wins`],
     thanks: `🙏 Thanks `,
     to: (name) => name,
@@ -240,7 +240,7 @@
     return true;
   }
   // also every N seconds while the race runs (rulesEvery=120 by default, 0 = only at the start), not in the last 20 s of a timer
-  const RULES_EVERY = Math.max(0, parseInt(P.get("rulesEvery") ?? "120", 10) || 0) * 1000;
+  const RULES_EVERY = Math.max(0, parseInt(P.get("rulesEvery") ?? "0", 10) || 0) * 1000; // off by default (TikTok warning)
   let lastCard = 0;
   if (RULES_EVERY) setInterval(() => {
     if (!round.running || round.ended || (timer.duration > 0 && timer.remaining <= 20)) return;
