@@ -22,6 +22,7 @@
    giftInfo=0         turn off the short "gifts count as points" note at the start of each round
    thanks=0           turn off the thank-you line for the round's top gifters
    rules=0            turn off the how-to-play reminder every 15 s
+   welcome=180        welcome a viewer who joins (with how to play) at most every N seconds; welcome=0 = off
    voice=0            don't say "thank you <name>" out loud for gifts
    giftMult           votes per diamond (default 1)
    likes              votes per like, e.g. likes=0.1 (default 0 = off)
@@ -453,8 +454,22 @@
     supporters.set(id, s);
     drawThanks();
   }
+  // welcome a viewer who just joined, with how to play (incl. which gift goes where).
+  // At most once every 3 minutes (welcome=<seconds> to change, welcome=0 = off), so it doesn't repeat all the time.
+  let welcomeName = "", lastWelcome = 0;
+  const WELCOME_GAP = Math.max(0, parseInt(P.get("welcome") ?? "180", 10) || 0) * 1000;
+  function welcome(name) {
+    if (!WELCOME_GAP || Date.now() - lastWelcome < WELCOME_GAP || !votingOpen()) return;
+    lastWelcome = Date.now();
+    welcomeName = String(name || "").slice(0, 24);
+    infoUntil = Date.now() + 8000;
+    drawThanks();
+    clearTimeout(infoTimer);
+    infoTimer = setTimeout(() => { welcomeName = ""; drawThanks(); }, 8100);
+  }
   function showGiftInfo() {
     if (P.get("giftInfo") === "0") return;
+    welcomeName = "";
     infoUntil = Date.now() + 8000;
     drawThanks();
     clearTimeout(infoTimer);
@@ -486,7 +501,8 @@
     el.replaceChildren();
     if (Date.now() < infoUntil) {
       const map = giftMapParts();
-      if (map.length) el.append("🎁 מתנות נספרות: ", ...map);
+      if (welcomeName) el.append(`👋 ברוך הבא ${welcomeName}! כתבו 1 או 2`, ...(map.length ? ["  ·  ", ...map] : []));
+      else if (map.length) el.append("🎁 מתנות נספרות: ", ...map);
       else el.append("🎁 מתנות נספרות כנקודות לצד שבחרתם");
     } else if (Date.now() < ruleUntil) {
       const r = RULES[ruleIdx % RULES.length]();
@@ -592,13 +608,17 @@
       const diamonds = each * count;
       const votes = Math.max(1, Math.round(diamonds * cfg.giftMult));
       const icon = giftIcon(name);
-      add(side, votes, `🙏 תודה ${esc(user)}! <b class="ltr">+${votes.toLocaleString("en-US")}</b> ל${esc(sideName(side))}`, icon);
+      add(side, votes, `🙏 תודה ${esc(user)}! ${icon ? `<img class="ti" src="${esc(icon)}" alt="">` : "🎁"} = <b class="ltr">+${votes.toLocaleString("en-US")}</b> ל${esc(sideName(side))}`);
       if (window.SpeakThanks) window.SpeakThanks(user, "he");
       thank(id, user, votes);
       if (cfg.room && window.Relay) window.Relay.notify("tvo-" + cfg.room, { type: "gift", user, gift: String(pick(d.giftName, det.giftName, d.gift_name, ext.name) || name), n: votes, side: sideName(side) });
       chatChip(user, side, icon);
       flyGift(side, icon);
       if (each >= cfg.bigGift || votes >= cfg.bigGift) takeover(side, icon, votes);
+    }
+
+    else if (type === "member" || type === "join") {
+      welcome(user);
     }
 
     else if (type === "like" && cfg.likes > 0) {

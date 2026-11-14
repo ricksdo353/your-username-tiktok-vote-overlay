@@ -50,6 +50,7 @@ function start() {
 
   c.on(WebcastEvent.CHAT, (d) => send("chat", { ...who(d), comment: d.comment }));
   c.on(WebcastEvent.LIKE, (d) => send("like", { ...who(d), likeCount: d.likeCount }));
+  c.on(WebcastEvent.MEMBER, (d) => send("member", who(d))); // viewer joined (the board welcomes them)
   c.on(WebcastEvent.GIFT, (d) => send("gift", {
     ...who(d),
     giftName: d.giftDetails?.giftName ?? d.giftName,

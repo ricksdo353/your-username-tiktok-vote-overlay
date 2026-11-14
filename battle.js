@@ -45,6 +45,7 @@
     rulesTime: `⏱ המובילים בסוף הזמן מנצחים · כתבו את המספר של המדינה שלכם`,
     info: `🎁 מתנות נספרות כנקודות למדינה שלכם`,
     thankOne: (u) => `🙏 תודה ${u}!`,
+    welcome: (u, n) => `👋 ברוך הבא ${u}! כתבו 1–${n} · 🎁 מתנות נספרות למדינה שלכם`,
     rules: [(n) => `💬 כתבו מספר 1–${n} כדי להצטרף למדינה`, () => `🏎️ כל תגובה מקדמת את המכונית שלכם`, (n, g) => g > 0 ? `🏁 הראשונים ל־${g} מנצחים` : `⏱ המובילים בסוף הזמן מנצחים`],
     thanks: `🙏 תודה ל־`,
     to: (name) => "ל" + name,
@@ -59,6 +60,7 @@
     rulesTime: `⏱ Leader at the end wins · Comment your country's number`,
     info: `🎁 Gifts count as points for your country`,
     thankOne: (u) => `🙏 Thank you ${u}!`,
+    welcome: (u, n) => `👋 Welcome ${u}! Comment 1–${n} · 🎁 Gifts count for your country`,
     rules: [(n) => `💬 Comment 1–${n} to join a country`, () => `🏎️ Every comment moves your car forward`, (n, g) => g > 0 ? `🏁 First to ${g} wins` : `⏱ The leader at the end wins`],
     thanks: `🙏 Thanks `,
     to: (name) => name,
@@ -216,7 +218,16 @@
   /* The line under the race shows, in turn: a calm one-time note that gifts count (6 s at the start of a race),
      then the rules, alternating with a thank-you to the race's top 3 gifters. No repeating "send gifts" text. */
   let infoUntil = 0, rulesFlip = false;
-  function showGiftInfo() { if (P.get("giftInfo") !== "0") { infoUntil = Date.now() + 6000; drawRules(); setTimeout(drawRules, 6100); } }
+  function showGiftInfo() { if (P.get("giftInfo") !== "0") { welcomeName = ""; infoUntil = Date.now() + 6000; drawRules(); setTimeout(drawRules, 6100); } }
+  // welcome a viewer who joins, with how to play; at most once every 3 minutes (welcome=<s>, welcome=0 = off)
+  let welcomeName = "", lastWelcome = 0;
+  const WELCOME_GAP = Math.max(0, parseInt(P.get("welcome") ?? "180", 10) || 0) * 1000;
+  function welcome(name) {
+    if (!WELCOME_GAP || Date.now() - lastWelcome < WELCOME_GAP || !round.running) return;
+    lastWelcome = Date.now(); welcomeName = String(name || "").slice(0, 24);
+    infoUntil = Date.now() + 8000; drawRules();
+    setTimeout(() => { welcomeName = ""; drawRules(); }, 8100);
+  }
   setInterval(() => { rulesFlip = !rulesFlip; drawRules(); }, 7000);
   // how-to-play reminder every 15 s for 5 s (the gift line is NOT repeated: TikTok treats that as solicitation)
   let ruleIdx = -1, ruleUntil = 0;
@@ -224,7 +235,7 @@
   function drawRules() {
     const r = $("rules");
     const top = P.get("thanks") === "0" ? [] : [...giftCoins.values()].sort((x, y) => y.n - x.n).slice(0, 3);
-    if (Date.now() < infoUntil) r.textContent = T.info;
+    if (Date.now() < infoUntil) r.textContent = welcomeName ? T.welcome(welcomeName, N) : T.info;
     else if (Date.now() < ruleUntil) r.textContent = T.rules[ruleIdx % T.rules.length](N, cfg.goal > 0 ? fmt(cfg.goal) : 0);
     else if (rulesFlip && top.length) { r.textContent = T.thanks + top.map((s) => s.name).join(" · "); }
     else r.innerHTML = cfg.goal > 0 ? T.rulesGoal(fmt(cfg.goal)) : T.rulesTime;
@@ -531,6 +542,10 @@
       add(i, n, user, id);
       if (cfg.room && window.Relay) window.Relay.notify("tvr-" + cfg.room, { type: "gift", user, gift: String(pick(d.giftName, det.giftName, d.gift_name, ext.name) || name), n, side: TEAMS[i].name });
       if (P.get("thanks") !== "0") { const s = giftCoins.get(id) || { name: user, n: 0 }; s.n += n; s.name = user || s.name; giftCoins.set(id, s); }
+    }
+
+    else if (type === "member" || type === "join") {
+      welcome(user);
     }
 
     else if (type === "like" && cfg.likes > 0) {

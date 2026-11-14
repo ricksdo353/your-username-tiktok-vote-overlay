@@ -98,6 +98,7 @@ body.bg-none #tickerFade, body.bg-panel #tickerFade { display: none; }
   font-size: 66px; font-weight: 900; opacity: 0; border: 5px solid #fff; transform: translateY(70px) scale(.8); transition: opacity .16s, transform .2s cubic-bezier(.3,1.6,.5,1); white-space: nowrap; }
 #toast.show { opacity: 1; transform: none; }
 #toast img { width: 108px; height: 108px; object-fit: contain; }
+#toast img.ti { width: 84px; height: 84px; vertical-align: middle; }
 #toast b { color: #ffd34d; }
 #toast.a { background: rgba(20,86,201,.94); box-shadow: 0 0 50px rgba(47,139,255,.8); }
 #toast.b { background: rgba(75,20,181,.94); box-shadow: 0 0 50px rgba(138,61,255,.8); }

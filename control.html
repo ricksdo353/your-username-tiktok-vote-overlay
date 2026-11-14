@@ -142,6 +142,14 @@
     <button data-cmd="demo">🧪 מצב דמו (הפעל / כבה)</button>
   </section>
 
+  <!-- Pinned comment -->
+  <section>
+    <h2>📌 תגובה להצמדה בצ'אט</h2>
+    <textarea id="pinText" readonly style="direction:rtl;font-size:15px;min-height:90px"></textarea>
+    <button id="copyPin">📋 העתק</button>
+    <small>בלייב: כתוב את זה כתגובה, לחץ עליה לחיצה ארוכה ובחר Pin. כל מי שנכנס רואה את החוקים, בלי שתצטרך לחזור עליהם.</small>
+  </section>
+
   <!-- Gifts to thank -->
   <section>
     <h2>🙏 מי לתת תודה (מתנות בזמן אמת)</h2>
@@ -186,8 +194,8 @@
 </main>
 <div id="toast"></div>
 
-<script src="lib/mqtt.min.js?v=202611131419"></script>
-<script src="relay.js?v=202611131419"></script>
+<script src="lib/mqtt.min.js?v=202611141618"></script>
+<script src="relay.js?v=202611141618"></script>
 <script>
 (() => {
   const P = new URLSearchParams(location.search);
@@ -278,6 +286,23 @@
   $("copyPanel").onclick = () => copy(panelLink());
 
   // ----- send commands -----
+  // ----- pinned comment text (how to play, incl. which gift goes where) -----
+  function pinText() {
+    let left = P.get("left") || "", right = P.get("right") || "", ga = "Rose", gb = "TikTok";
+    try {
+      const o = new URL($("overlayIn").value.trim());
+      left = o.searchParams.get("left") || left; right = o.searchParams.get("right") || right;
+      ga = (o.searchParams.get("giftA") || ga).split(",")[0].trim(); gb = (o.searchParams.get("giftB") || gb).split(",")[0].trim();
+    } catch (_) { /* no overlay link pasted */ }
+    const he = { rose: "ורד", tiktok: "טיקטוק", "hand heart": "לב בידיים", confetti: "קונפטי" };
+    const g = (x) => he[x.toLowerCase()] || x;
+    const short = (x) => (x || "").split(" ").slice(-1)[0];
+    return `📌 איך משחקים: כתבו 1 ל${short(left) || "שמאל"} או 2 ל${short(right) || "ימין"} · ${g(ga)} = נקודה ל${short(left) || "שמאל"} · ${g(gb)} = נקודה ל${short(right) || "ימין"} · כל סבב 10 דקות`;
+  }
+  function drawPin() { $("pinText").value = pinText(); }
+  drawPin(); $("overlayIn").addEventListener("input", drawPin);
+  $("copyPin").onclick = () => copy($("pinText").value);
+
   // ----- gifts to thank (the board reports each gift) -----
   const giftLog = [];
   function onBoardEvent(e) {
