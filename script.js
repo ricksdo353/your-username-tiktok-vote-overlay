@@ -24,6 +24,7 @@
    rules=0            turn off the how-to-play reminder every 15 s
    aliasA / aliasB    extra words that count as a vote for side A / B, e.g. aliasA=ביבי,bibi
    rulesCard=0        turn off the big rules card shown for 8 s at the start of every round
+   rulesEvery=120     also show the rules card every N seconds during a round (0 = only at the start)
    welcome=180        welcome a viewer who joins (with how to play) at most every N seconds; welcome=0 = off
    voice=0            don't say "thank you <name>" out loud for gifts
    giftMult           votes per diamond (default 1)
@@ -498,10 +499,19 @@
     });
     row("⏱", (tx) => tx.append(timer.duration > 0 ? `סבב של ${Math.round(timer.duration / 60) || 1} דקות, ובסוף מכריזים מנצח` : "מי שמוביל בסוף מנצח"));
     card.classList.add("show");
+    lastCard = Date.now();
     clearTimeout(cardTimer);
     cardTimer = setTimeout(() => card.classList.remove("show"), 8000);
     return true;
   }
+  // also show the card every N seconds while a round runs (rulesEvery=120 by default; rulesEvery=0 = only at the start),
+  // but not in the last 20 seconds of a round
+  const RULES_EVERY = Math.max(0, parseInt(P.get("rulesEvery") ?? "120", 10) || 0) * 1000;
+  let lastCard = 0;
+  if (RULES_EVERY) setInterval(() => {
+    if (!timer.running || timer.ended || (timer.duration > 0 && timer.remaining <= 20)) return;
+    if (Date.now() - lastCard >= RULES_EVERY) showRulesCard();
+  }, 1000);
   function showGiftInfo() {
     if (showRulesCard()) return; // the card already explains the gifts
     if (P.get("giftInfo") === "0") return;

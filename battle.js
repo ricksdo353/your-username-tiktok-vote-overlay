@@ -234,10 +234,18 @@
     card.innerHTML = `<h2>📜 <span class="grad">${HE ? "איך משחקים" : "How to play"}</span></h2>` +
       rows.map(([i, t]) => `<div class="row"><div class="ic">${i}</div><div class="tx">${t}</div></div>`).join("");
     card.classList.add("show");
+    lastCard = Date.now();
     clearTimeout(cardTimer);
     cardTimer = setTimeout(() => card.classList.remove("show"), 8000);
     return true;
   }
+  // also every N seconds while the race runs (rulesEvery=120 by default, 0 = only at the start), not in the last 20 s of a timer
+  const RULES_EVERY = Math.max(0, parseInt(P.get("rulesEvery") ?? "120", 10) || 0) * 1000;
+  let lastCard = 0;
+  if (RULES_EVERY) setInterval(() => {
+    if (!round.running || round.ended || (timer.duration > 0 && timer.remaining <= 20)) return;
+    if (Date.now() - lastCard >= RULES_EVERY) showRulesCard();
+  }, 1000);
   function showGiftInfo() { if (showRulesCard()) return; if (P.get("giftInfo") !== "0") { welcomeName = ""; infoUntil = Date.now() + 6000; drawRules(); setTimeout(drawRules, 6100); } }
   // welcome a viewer who joins, with how to play; at most once every 3 minutes (welcome=<s>, welcome=0 = off)
   let welcomeName = "", lastWelcome = 0;
