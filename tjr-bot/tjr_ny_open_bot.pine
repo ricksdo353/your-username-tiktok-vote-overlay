@@ -1,0 +1,335 @@
+// This Pine Script® code is subject to the terms of the Mozilla Public License 2.0
+// TJR-style NY open bot: liquidity sweep -> displacement shift (CHoCH) -> FVG retrace entry.
+// Trades ONLY inside the Israel-time window (default 16:30-17:30 Asia/Jerusalem).
+// Built for NQ / MNQ on a 1-minute chart. Education / research tool, not financial advice.
+//@version=6
+strategy("TJR NY Open Bot (MNQ)", overlay = true, pyramiding = 0,
+     default_qty_type = strategy.fixed, default_qty_value = 1,
+     initial_capital = 50000, commission_type = strategy.commission.cash_per_contract,
+     commission_value = 0.62, slippage = 2, process_orders_on_close = false,
+     max_labels_count = 300)
+
+// ───────────────────────── Inputs ─────────────────────────
+grpT = "Time (Israel)"
+tradeSess  = input.session("1630-1730", "Trading window (entries only)", group = grpT)
+sweepSess  = input.session("1600-1730", "Sweeps count from", group = grpT,
+     tooltip = "A liquidity sweep inside this window can start a setup. Entries still only happen in the trading window.")
+flattenEnd = input.bool(true, "Close any open trade when the window ends", group = grpT)
+tzIL = "Asia/Jerusalem"
+
+grpQ = "Quality filters"
+minGrade   = input.string("A", "Minimum setup grade", options = ["A+", "A", "B"], group = grpQ,
+     tooltip = "B = core model only (sweep + displacement shift + FVG + clean R:R)\nA = B + higher-timeframe bias agrees\nA+ = A + SMT divergence with ES")
+htfTf      = input.timeframe("60", "Bias timeframe", group = grpQ)
+dispMult   = input.float(1.2, "Displacement: candle body ≥ x × ATR", minval = 0.1, step = 0.1, group = grpQ)
+minFvgTk   = input.int(8, "Minimum FVG size (ticks)", minval = 1, group = grpQ)
+maxSetupB  = input.int(30, "Setup expires after (bars from sweep)", minval = 5, group = grpQ)
+pivLen     = input.int(2, "Swing strength (bars each side)", minval = 1, group = grpQ)
+smtSym     = input.symbol("CME_MINI:ES1!", "SMT comparison symbol", group = grpQ)
+smtLen     = input.int(20, "SMT lookback (bars)", minval = 5, group = grpQ)
+
+grpR = "Risk"
+entryMode  = input.string("FVG edge", "Entry price", options = ["FVG edge", "FVG 50% (CE)"], group = grpR)
+minRR      = input.float(2.0, "Minimum reward:risk to target", minval = 1.0, step = 0.25, group = grpR)
+maxRR      = input.float(6.0, "Skip if nearest liquidity target is beyond (R)", minval = 2.0, step = 0.5, group = grpR)
+stopBufTk  = input.int(4, "Stop buffer beyond sweep (ticks)", minval = 0, group = grpR)
+maxStopPts = input.float(40, "Max stop size (points)", minval = 1, group = grpR)
+riskUsd    = input.float(200, "Risk per trade ($)", minval = 1, group = grpR)
+maxQty     = input.int(5, "Max contracts", minval = 1, group = grpR)
+maxTrades  = input.int(1, "Max trades per day", minval = 1, maxval = 5, group = grpR)
+fillBars   = input.int(10, "Cancel unfilled limit after (bars)", minval = 1, group = grpR)
+
+grpA = "Automation"
+alertTicker = input.string("MNQ1!", "Ticker sent in webhook alerts", group = grpA)
+
+// ───────────────────────── Time ─────────────────────────
+inWin    = not na(time(timeframe.period, tradeSess, tzIL))
+inSweep  = not na(time(timeframe.period, sweepSess, tzIL))
+winStart = inWin and not inWin[1]
+winEnd   = not inWin and inWin[1]
+
+// ───────────────────────── Liquidity levels ─────────────────────────
+pdh = request.security(syminfo.tickerid, "D", high[1], lookahead = barmerge.lookahead_on)
+pdl = request.security(syminfo.tickerid, "D", low[1],  lookahead = barmerge.lookahead_on)
+
+inAsia = not na(time(timeframe.period, "2000-2359", "America/New_York"))
+inLon  = not na(time(timeframe.period, "0200-0500", "America/New_York"))
+
+var float aH = na
+var float aL = na
+var float asiaH = na
+var float asiaL = na
+if inAsia and not inAsia[1]
+    aH := high
+    aL := low
+else if inAsia
+    aH := math.max(aH, high)
+    aL := math.min(aL, low)
+if not inAsia and inAsia[1]
+    asiaH := aH
+    asiaL := aL
+
+var float lH = na
+var float lL = na
+var float lonH = na
+var float lonL = na
+if inLon and not inLon[1]
+    lH := high
+    lL := low
+else if inLon
+    lH := math.max(lH, high)
+    lL := math.min(lL, low)
+if not inLon and inLon[1]
+    lonH := lH
+    lonL := lL
+
+// ───────────────────────── HTF bias (non-repainting) ─────────────────────────
+f_bias() =>
+    var int b = 0
+    var float sh = na
+    var float sl = na
+    ph = ta.pivothigh(high, 3, 3)
+    pl = ta.pivotlow(low, 3, 3)
+    if not na(ph)
+        sh := ph
+    if not na(pl)
+        sl := pl
+    if not na(sh) and close > sh
+        b := 1
+    if not na(sl) and close < sl
+        b := -1
+    b
+htfBias = request.security(syminfo.tickerid, htfTf, f_bias()[1], lookahead = barmerge.lookahead_on)
+
+// ───────────────────────── Chart-TF helpers ─────────────────────────
+atr  = ta.atr(14)
+body = math.abs(close - open)
+dispBar = ta.highest(body, 3) >= dispMult * atr
+
+ph = ta.pivothigh(high, pivLen, pivLen)
+pl = ta.pivotlow(low, pivLen, pivLen)
+var float lastPH = na
+var float lastPL = na
+var int   lastPHbar = na
+var int   lastPLbar = na
+if not na(ph)
+    lastPH := ph
+    lastPHbar := bar_index - pivLen
+if not na(pl)
+    lastPL := pl
+    lastPLbar := bar_index - pivLen
+
+bullFvg = low > high[2] and (low - high[2]) >= minFvgTk * syminfo.mintick
+bearFvg = high < low[2] and (low[2] - high) >= minFvgTk * syminfo.mintick
+
+// SMT divergence with ES
+smtLow  = request.security(smtSym, timeframe.period, low)
+smtHigh = request.security(smtSym, timeframe.period, high)
+smtBull = low  < ta.lowest(low, smtLen)[1]   and smtLow  >= ta.lowest(smtLow, smtLen)[1]
+smtBear = high > ta.highest(high, smtLen)[1] and smtHigh <= ta.highest(smtHigh, smtLen)[1]
+
+// Sweeps: wick through a level, close back inside
+f_sweptLow(lv) => not na(lv) and low < lv and close > lv
+f_sweptHigh(lv) => not na(lv) and high > lv and close < lv
+sslSweep = f_sweptLow(pdl) or f_sweptLow(asiaL) or f_sweptLow(lonL)
+bslSweep = f_sweptHigh(pdh) or f_sweptHigh(asiaH) or f_sweptHigh(lonH)
+
+f_gradeOk(bool biasOk, bool smtOk) =>
+    minGrade == "B" ? true : minGrade == "A" ? biasOk : biasOk and smtOk
+f_gradeTxt(bool biasOk, bool smtOk) =>
+    biasOk and smtOk ? "A+" : biasOk ? "A" : "B"
+
+// Nearest liquidity at or beyond minRR
+f_longTarget(float entry, float risk) =>
+    float best = na
+    float need = entry + minRR * risk
+    for lv in array.from(pdh, asiaH, lonH)
+        if not na(lv) and lv >= need and (na(best) or lv < best)
+            best := lv
+    not na(best) and (best - entry) / risk <= maxRR ? best : na
+f_shortTarget(float entry, float risk) =>
+    float best = na
+    float need = entry - minRR * risk
+    for lv in array.from(pdl, asiaL, lonL)
+        if not na(lv) and lv <= need and (na(best) or lv > best)
+            best := lv
+    not na(best) and (entry - best) / risk <= maxRR ? best : na
+
+f_qty(float risk) =>
+    q = math.floor(riskUsd / (risk * syminfo.pointvalue))
+    math.min(q, maxQty)
+
+f_entryMsg(string side, int q, float sl, float tp) =>
+    '{"ticker":"' + alertTicker + '","action":"' + side + '","orderType":"market","quantity":' + str.tostring(q) +
+     ',"stopLoss":{"type":"stop","stopPrice":' + str.tostring(sl, format.mintick) +
+     '},"takeProfit":{"limitPrice":' + str.tostring(tp, format.mintick) + '}}'
+exitMsg = '{"ticker":"' + alertTicker + '","action":"exit"}'
+
+// ───────────────────────── Daily counters ─────────────────────────
+var int tradesToday = 0
+if winStart
+    tradesToday := 0
+if strategy.position_size != 0 and strategy.position_size[1] == 0
+    tradesToday += 1
+canTrade = inWin and tradesToday < maxTrades and strategy.position_size == 0
+
+// ───────────────────────── LONG state machine ─────────────────────────
+// 0 idle · 1 swept, waiting for shift+FVG · 2 limit order working
+var int   bS = 0
+var float bLow = na
+var int   bBar = na
+var float bRef = na
+var bool  bShift = false
+var bool  bSmt = false
+var float bTop = na
+var float bBot = na
+var float bEntry = na
+var float bStop = na
+var float bTp = na
+var int   bArmBar = na
+
+if bS == 0 and sslSweep and inSweep
+    bS := 1
+    bLow := low
+    bBar := bar_index
+    bRef := lastPH
+    bShift := false
+    bSmt := smtBull
+    bTop := na
+    bBot := na
+else if bS == 1
+    if low < bLow                          // deeper sweep: restart the leg
+        bLow := low
+        bBar := bar_index
+        bShift := false
+        bTop := na
+        bBot := na
+    if not na(ph) and lastPHbar < bBar     // late-confirmed swing high before the sweep
+        bRef := lastPH
+    bSmt := bSmt or smtBull
+    if bullFvg and bar_index - 2 >= bBar
+        bTop := low
+        bBot := high[2]
+    if not bShift and not na(bRef) and close > bRef and dispBar
+        bShift := true
+    if bar_index - bBar > maxSetupB or not inSweep
+        bS := 0
+    else if bShift and not na(bTop) and canTrade and strategy.position_size == 0 and sS != 2
+        e  = entryMode == "FVG edge" ? bTop : (bTop + bBot) / 2
+        sl = bLow - stopBufTk * syminfo.mintick
+        r  = e - sl
+        tp = r > 0 ? f_longTarget(e, r) : na
+        biasOk = htfBias == 1
+        q = r > 0 ? f_qty(r) : 0
+        if r > 0 and r <= maxStopPts and not na(tp) and q >= 1 and f_gradeOk(biasOk, bSmt) and close > e
+            bEntry := e
+            bStop := sl
+            bTp := tp
+            bArmBar := bar_index
+            bS := 2
+            strategy.entry("Long", strategy.long, qty = q, limit = e, alert_message = f_entryMsg("buy", q, sl, tp))
+            strategy.exit("Long X", "Long", stop = sl, limit = tp, alert_message = exitMsg)
+            label.new(bar_index, bLow, "LONG " + f_gradeTxt(biasOk, bSmt) + "\n" + str.tostring(q) + " ct · " +
+                 str.tostring((tp - e) / r, "#.#") + "R", style = label.style_label_up, color = color.new(color.teal, 0),
+                 textcolor = color.white, size = size.small)
+else if bS == 2
+    if strategy.position_size > 0
+        bS := 0                            // filled; the exit order manages it
+    else if bar_index - bArmBar >= fillBars or not inWin or low <= bStop or high >= bTp
+        strategy.cancel("Long")
+        bS := 0
+
+// ───────────────────────── SHORT state machine ─────────────────────────
+var int   sS = 0
+var float sHigh = na
+var int   sBar = na
+var float sRef = na
+var bool  sShift = false
+var bool  sSmt = false
+var float sTop = na
+var float sBot = na
+var float sEntry = na
+var float sStop = na
+var float sTp = na
+var int   sArmBar = na
+
+if sS == 0 and bslSweep and inSweep
+    sS := 1
+    sHigh := high
+    sBar := bar_index
+    sRef := lastPL
+    sShift := false
+    sSmt := smtBear
+    sTop := na
+    sBot := na
+else if sS == 1
+    if high > sHigh
+        sHigh := high
+        sBar := bar_index
+        sShift := false
+        sTop := na
+        sBot := na
+    if not na(pl) and lastPLbar < sBar
+        sRef := lastPL
+    sSmt := sSmt or smtBear
+    if bearFvg and bar_index - 2 >= sBar
+        sTop := low[2]
+        sBot := high
+    if not sShift and not na(sRef) and close < sRef and dispBar
+        sShift := true
+    if bar_index - sBar > maxSetupB or not inSweep
+        sS := 0
+    else if sShift and not na(sBot) and canTrade and strategy.position_size == 0 and bS != 2
+        e  = entryMode == "FVG edge" ? sBot : (sTop + sBot) / 2
+        sl = sHigh + stopBufTk * syminfo.mintick
+        r  = sl - e
+        tp = r > 0 ? f_shortTarget(e, r) : na
+        biasOk = htfBias == -1
+        q = r > 0 ? f_qty(r) : 0
+        if r > 0 and r <= maxStopPts and not na(tp) and q >= 1 and f_gradeOk(biasOk, sSmt) and close < e
+            sEntry := e
+            sStop := sl
+            sTp := tp
+            sArmBar := bar_index
+            sS := 2
+            strategy.entry("Short", strategy.short, qty = q, limit = e, alert_message = f_entryMsg("sell", q, sl, tp))
+            strategy.exit("Short X", "Short", stop = sl, limit = tp, alert_message = exitMsg)
+            label.new(bar_index, sHigh, "SHORT " + f_gradeTxt(biasOk, sSmt) + "\n" + str.tostring(q) + " ct · " +
+                 str.tostring((e - tp) / r, "#.#") + "R", style = label.style_label_down, color = color.new(color.maroon, 0),
+                 textcolor = color.white, size = size.small)
+else if sS == 2
+    if strategy.position_size < 0
+        sS := 0
+    else if bar_index - sArmBar >= fillBars or not inWin or high >= sStop or low <= sTp
+        strategy.cancel("Short")
+        sS := 0
+
+// ───────────────────────── End of window ─────────────────────────
+if winEnd
+    strategy.cancel_all()
+    bS := bS == 2 ? 0 : bS
+    sS := sS == 2 ? 0 : sS
+    if flattenEnd and strategy.position_size != 0
+        strategy.close_all(comment = "Window end", alert_message = exitMsg)
+
+// ───────────────────────── Visuals ─────────────────────────
+bgcolor(inWin ? color.new(color.blue, 92) : na, title = "Trading window")
+plot(pdh,   "PDH",        color.new(color.red, 30),    1, plot.style_stepline)
+plot(pdl,   "PDL",        color.new(color.green, 30),  1, plot.style_stepline)
+plot(asiaH, "Asia high",  color.new(color.orange, 40), 1, plot.style_stepline)
+plot(asiaL, "Asia low",   color.new(color.orange, 40), 1, plot.style_stepline)
+plot(lonH,  "London high", color.new(color.purple, 40), 1, plot.style_stepline)
+plot(lonL,  "London low",  color.new(color.purple, 40), 1, plot.style_stepline)
+
+var table dash = table.new(position.top_right, 2, 4, bgcolor = color.new(color.black, 20), border_width = 1)
+if barstate.islast
+    table.cell(dash, 0, 0, "Window",  text_color = color.white)
+    table.cell(dash, 1, 0, inWin ? "OPEN" : "closed", text_color = inWin ? color.lime : color.gray)
+    table.cell(dash, 0, 1, "HTF bias", text_color = color.white)
+    table.cell(dash, 1, 1, htfBias == 1 ? "Bullish" : htfBias == -1 ? "Bearish" : "None",
+         text_color = htfBias == 1 ? color.lime : htfBias == -1 ? color.red : color.gray)
+    table.cell(dash, 0, 2, "Trades today", text_color = color.white)
+    table.cell(dash, 1, 2, str.tostring(tradesToday) + " / " + str.tostring(maxTrades), text_color = color.white)
+    table.cell(dash, 0, 3, "Setup", text_color = color.white)
+    table.cell(dash, 1, 3, bS == 2 ? "Long order working" : sS == 2 ? "Short order working" :
+         bS == 1 ? "SSL swept, waiting" : sS == 1 ? "BSL swept, waiting" : "Waiting for sweep", text_color = color.yellow)
