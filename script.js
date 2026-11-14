@@ -22,6 +22,7 @@
    giftInfo=0         turn off the short "gifts count as points" note at the start of each round
    thanks=0           turn off the thank-you line for the round's top gifters
    rules=0            turn off the how-to-play reminder every 15 s
+   aliasA / aliasB    extra words that count as a vote for side A / B, e.g. aliasA=ביבי,bibi
    welcome=180        welcome a viewer who joins (with how to play) at most every N seconds; welcome=0 = off
    voice=0            don't say "thank you <name>" out loud for gifts
    giftMult           votes per diamond (default 1)
@@ -311,7 +312,7 @@
     }
     div.append(text);
     box.appendChild(div);
-    while (box.children.length > 2) box.removeChild(box.firstChild);
+    while (box.children.length > (DEBUG ? 5 : 2)) box.removeChild(box.firstChild);
     setTimeout(() => div.remove(), 6000);
   }
 
@@ -561,6 +562,31 @@
   const num = (v, def = 0) => { const n = Number(v); return Number.isFinite(n) ? n : def; };
   const bool = (v) => v === true || v === 1 || v === "1" || String(v).toLowerCase() === "true";
 
+  /* Which side does a comment vote for?
+     Counts: "1" / "2" (also "1️⃣", "1!"), "1 ביבי" (the number then a word), or a side's name / nickname
+     ("ביבי", "נתניהו", "איזנקוט"; more with aliasA=… / aliasB=…, comma separated).
+     Not counted: other numbers ("100", "12"), "1 2", or a comment naming both sides. */
+  const norm = (x) => String(x || "").toLowerCase().replace(/[\u0591-\u05C7]/g, "").replace(/[״"'׳`]/g, "").trim();
+  function aliases(name, extra) {
+    const list = [name, name.split(/\s+/).slice(-1)[0]].concat(String(extra || "").split(","));
+    if (/נתניהו/.test(name)) list.push("ביבי", "bibi", "netanyahu");
+    if (/איזנקוט|אייזנקוט/.test(name)) list.push("איזנקוט", "אייזנקוט", "גדי", "eisenkot", "gadi");
+    return [...new Set(list.map(norm).filter((w) => w.length >= 2))];
+  }
+  const ALIAS = { a: aliases(cfg.left, P.get("aliasA")), b: aliases(cfg.right, P.get("aliasB")) };
+  const hasWord = (t, w) => new RegExp("(^|[^\\p{L}])" + w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "($|[^\\p{L}])", "u").test(t);
+  function voteSide(text) {
+    const t = norm(text).replace(/[️⃣]/g, "");
+    const bare = t.replace(/[\s!.?,]+/g, "");
+    if (bare === "1") return "a";
+    if (bare === "2") return "b";
+    const m = /^([12])\s+(\D.*)$/u.exec(t);           // "1 ביבי", "2 גדי!!"
+    if (m) return m[1] === "1" ? "a" : "b";
+    if (/\d/.test(t)) return null;                     // any other number: not a vote
+    const a = ALIAS.a.some((w) => hasWord(t, w)), b = ALIAS.b.some((w) => hasWord(t, w));
+    return a && !b ? "a" : b && !a ? "b" : null;
+  }
+
   // Accepts both {event, data} (TikFinity / server.js) and flat objects.
   function handle(msg) {
     if (!msg || typeof msg !== "object") return;
@@ -569,6 +595,11 @@
     const u = d.user || {};
     const user = pick(d.nickname, u.nickname, d.uniqueId, u.uniqueId) || "viewer";
     const id = String(pick(d.uniqueId, u.uniqueId, d.userId, u.userId) || user);
+    // debug=1: show every message that arrives from TikFinity, before any filtering
+    if (DEBUG && type !== "like" && type !== "member" && type !== "roomuser" && type !== "social") {
+      const what = d.comment ?? d.text ?? d.giftName ?? "";
+      debugLog(`📥 ${type || "(no type: " + Object.keys(msg).slice(0, 4).join(",") + ")"} · ${user}${what !== "" ? " · " + JSON.stringify(String(what).slice(0, 20)) : ""}`);
+    }
 
     if (type === "chat" || type === "comment") {
       const text = String(d.comment || d.text || "").trim().toLowerCase();
@@ -577,15 +608,12 @@
         return;
       }
       // Only a comment that is exactly "1" / "2" (or the full name) is a vote
-      const clean = text.replace(/[\s!.?,️⃣]+/g, "");
-      let side = null;
-      if (clean === "1" || text === cfg.left.toLowerCase()) side = "a";
-      else if (clean === "2" || text === cfg.right.toLowerCase()) side = "b";
-      if (!side) return;
+      const side = voteSide(text);
+      if (!side) return debugLog(`✗ ${user}: "${text.slice(0, 20)}" (לא קול)`);
       viewerSide.set(id, side);
       if (!votingOpen()) return debugLog(`⏸ ${user}: ${text} (סבב לא פעיל)`);
       const now = Date.now();
-      if (now - (lastVote.get(id) || 0) < cfg.cooldown) return;
+      if (now - (lastVote.get(id) || 0) < cfg.cooldown) return debugLog(`⏱ ${user}: מהר מדי (פעם ב־2 שניות)`);
       lastVote.set(id, now);
       add(side, 1);
       chatChip(user, side);
