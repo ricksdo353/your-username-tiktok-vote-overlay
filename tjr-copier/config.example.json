@@ -1,0 +1,24 @@
+{
+  "channel": "tjr",
+  "account_label": "tradovate demo",
+  "webhook_url": "",
+  "ticker": "MNQ1!",
+  "quantity": 1,
+  "extra_fields": {},
+  "timezone": "Asia/Jerusalem",
+  "active_hours": ["15:00", "23:00"],
+  "max_trades_per_day": 3,
+  "max_hold_minutes": 60,
+  "cooldown_s": 90,
+  "chunk_seconds": 6,
+  "whisper_model": "small.en",
+  "whisper_device": "auto",
+  "eval": {
+    "delay_seconds": 15,
+    "contracts": 1,
+    "point_value": 2.0,
+    "commission_rt": 1.24,
+    "stop_points": 30,
+    "target_points": 60
+  }
+}

@@ -1,0 +1,6 @@
+audio/
+logs/
+results/
+signals/
+config.json
+__pycache__/
