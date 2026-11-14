@@ -1,9 +1,9 @@
 // This Pine Script® code is subject to the terms of the Mozilla Public License 2.0
 // TJR-style NY open bot: liquidity sweep -> displacement shift (CHoCH) -> FVG retrace entry.
-// Trades ONLY inside the Israel-time window (default 16:30-17:30 Asia/Jerusalem).
-// Built for NQ / MNQ on a 1-minute chart. Education / research tool, not financial advice.
+// Trades ONLY inside an Israel-time window. Presets: MNQ/NQ 16:30-17:30, GBPJPY 10:00-12:00 (Asia/Jerusalem).
+// Built for 1-minute charts. Education / research tool, not financial advice.
 //@version=6
-strategy("TJR NY Open Bot (MNQ)", overlay = true, pyramiding = 0,
+strategy("TJR Session Bot (MNQ + GBPJPY)", overlay = true, pyramiding = 0,
      default_qty_type = strategy.fixed, default_qty_value = 1,
      initial_capital = 50000, commission_type = strategy.commission.cash_per_contract,
      commission_value = 0.62, slippage = 2, process_orders_on_close = false,
@@ -11,11 +11,16 @@ strategy("TJR NY Open Bot (MNQ)", overlay = true, pyramiding = 0,
 
 // ───────────────────────── Inputs ─────────────────────────
 grpT = "Time (Israel)"
+preset     = input.string("MNQ / NQ (16:30-17:30)", "Market preset", group = grpT,
+     options = ["MNQ / NQ (16:30-17:30)", "GBPJPY (10:00-12:00)", "Custom (use inputs below)"],
+     tooltip = "Presets set the window, sweep window, FVG size, stop buffer, max stop and which session levels are used. Custom uses the inputs below.")
 tradeSess  = input.session("1630-1730", "Trading window (entries only)", group = grpT)
 sweepSess  = input.session("1600-1730", "Sweeps count from", group = grpT,
      tooltip = "A liquidity sweep inside this window can start a setup. Entries still only happen in the trading window.")
 flattenEnd = input.bool(true, "Close any open trade when the window ends", group = grpT)
 tzIL = "Asia/Jerusalem"
+isNQ = preset == "MNQ / NQ (16:30-17:30)"
+isGJ = preset == "GBPJPY (10:00-12:00)"
 
 grpQ = "Quality filters"
 minGrade   = input.string("A", "Minimum setup grade", options = ["A+", "A", "B"], group = grpQ,
@@ -35,16 +40,26 @@ maxRR      = input.float(6.0, "Skip if nearest liquidity target is beyond (R)", 
 stopBufTk  = input.int(4, "Stop buffer beyond sweep (ticks)", minval = 0, group = grpR)
 maxStopPts = input.float(40, "Max stop size (points)", minval = 1, group = grpR)
 riskUsd    = input.float(200, "Risk per trade ($)", minval = 1, group = grpR)
-maxQty     = input.int(5, "Max contracts", minval = 1, group = grpR)
-maxTrades  = input.int(1, "Max trades per day", minval = 1, maxval = 5, group = grpR)
+maxQty     = input.int(5, "Max contracts (futures) / lots (forex)", minval = 1, group = grpR)
+maxTrades  = input.int(2, "Max trades per day (this chart)", minval = 1, maxval = 5, group = grpR,
+     tooltip = "Each chart counts its own trades. For 3 a day in total: GBPJPY chart 2 + MNQ chart 1.")
 fillBars   = input.int(10, "Cancel unfilled limit after (bars)", minval = 1, group = grpR)
 
 grpA = "Automation"
-alertTicker = input.string("MNQ1!", "Ticker sent in webhook alerts", group = grpA)
+alertTickerIn = input.string("", "Ticker sent in webhook alerts (blank = preset default)", group = grpA)
+alertTicker = alertTickerIn != "" ? alertTickerIn : isGJ ? "GBPJPY" : isNQ ? "MNQ1!" : syminfo.ticker
+
+// ───────────────────────── Preset values ─────────────────────────
+tradeSessE = isNQ ? "1630-1730" : isGJ ? "1000-1200" : tradeSess
+sweepSessE = isNQ ? "1600-1730" : isGJ ? "0930-1200" : sweepSess
+minFvgPx   = isNQ ? 2.0  : isGJ ? 0.010 : minFvgTk * syminfo.mintick
+stopBufPx  = isNQ ? 1.0  : isGJ ? 0.005 : stopBufTk * syminfo.mintick
+maxStopPx  = isNQ ? 40.0 : isGJ ? 0.25  : maxStopPts
+useLondon  = not isGJ      // London is still forming during the GBPJPY window
 
 // ───────────────────────── Time ─────────────────────────
-inWin    = not na(time(timeframe.period, tradeSess, tzIL))
-inSweep  = not na(time(timeframe.period, sweepSess, tzIL))
+inWin    = not na(time(timeframe.period, tradeSessE, tzIL))
+inSweep  = not na(time(timeframe.period, sweepSessE, tzIL))
 winStart = inWin and not inWin[1]
 winEnd   = not inWin and inWin[1]
 
@@ -119,8 +134,8 @@ if not na(pl)
     lastPL := pl
     lastPLbar := bar_index - pivLen
 
-bullFvg = low > high[2] and (low - high[2]) >= minFvgTk * syminfo.mintick
-bearFvg = high < low[2] and (low[2] - high) >= minFvgTk * syminfo.mintick
+bullFvg = low > high[2] and (low - high[2]) >= minFvgPx
+bearFvg = high < low[2] and (low[2] - high) >= minFvgPx
 
 // SMT divergence with ES
 smtLow  = request.security(smtSym, timeframe.period, low)
@@ -131,8 +146,8 @@ smtBear = high > ta.highest(high, smtLen)[1] and smtHigh <= ta.highest(smtHigh, 
 // Sweeps: wick through a level, close back inside
 f_sweptLow(lv) => not na(lv) and low < lv and close > lv
 f_sweptHigh(lv) => not na(lv) and high > lv and close < lv
-sslSweep = f_sweptLow(pdl) or f_sweptLow(asiaL) or f_sweptLow(lonL)
-bslSweep = f_sweptHigh(pdh) or f_sweptHigh(asiaH) or f_sweptHigh(lonH)
+sslSweep = f_sweptLow(pdl) or f_sweptLow(asiaL) or (useLondon and f_sweptLow(lonL))
+bslSweep = f_sweptHigh(pdh) or f_sweptHigh(asiaH) or (useLondon and f_sweptHigh(lonH))
 
 f_gradeOk(bool biasOk, bool smtOk) =>
     minGrade == "B" ? true : minGrade == "A" ? biasOk : biasOk and smtOk
@@ -143,23 +158,29 @@ f_gradeTxt(bool biasOk, bool smtOk) =>
 f_longTarget(float entry, float risk) =>
     float best = na
     float need = entry + minRR * risk
-    for lv in array.from(pdh, asiaH, lonH)
+    for lv in array.from(pdh, asiaH, useLondon ? lonH : na)
         if not na(lv) and lv >= need and (na(best) or lv < best)
             best := lv
     not na(best) and (best - entry) / risk <= maxRR ? best : na
 f_shortTarget(float entry, float risk) =>
     float best = na
     float need = entry - minRR * risk
-    for lv in array.from(pdl, asiaL, lonL)
+    for lv in array.from(pdl, asiaL, useLondon ? lonL : na)
         if not na(lv) and lv <= need and (na(best) or lv > best)
             best := lv
     not na(best) and (entry - best) / risk <= maxRR ? best : na
 
+usdRate = request.currency_rate(syminfo.currency, "USD")
 f_qty(float risk) =>
-    q = math.floor(riskUsd / (risk * syminfo.pointvalue))
-    math.min(q, maxQty)
+    float q = 0
+    if syminfo.type == "forex"
+        // units, rounded down to 0.01 lot (1,000 units); maxQty is in lots
+        q := math.min(math.floor(riskUsd / (risk * usdRate) / 1000) * 1000, maxQty * 100000)
+    else
+        q := math.min(math.floor(riskUsd / (risk * syminfo.pointvalue * usdRate)), maxQty)
+    q
 
-f_entryMsg(string side, int q, float sl, float tp) =>
+f_entryMsg(string side, float q, float sl, float tp) =>
     '{"ticker":"' + alertTicker + '","action":"' + side + '","orderType":"market","quantity":' + str.tostring(q) +
      ',"stopLoss":{"type":"stop","stopPrice":' + str.tostring(sl, format.mintick) +
      '},"takeProfit":{"limitPrice":' + str.tostring(tp, format.mintick) + '}}'
@@ -216,12 +237,12 @@ else if bS == 1
         bS := 0
     else if bShift and not na(bTop) and canTrade and strategy.position_size == 0 and sS != 2
         e  = entryMode == "FVG edge" ? bTop : (bTop + bBot) / 2
-        sl = bLow - stopBufTk * syminfo.mintick
+        sl = bLow - stopBufPx
         r  = e - sl
         tp = r > 0 ? f_longTarget(e, r) : na
         biasOk = htfBias == 1
-        q = r > 0 ? f_qty(r) : 0
-        if r > 0 and r <= maxStopPts and not na(tp) and q >= 1 and f_gradeOk(biasOk, bSmt) and close > e
+        q = r > 0 ? f_qty(r) : 0.0
+        if r > 0 and r <= maxStopPx and not na(tp) and q > 0 and f_gradeOk(biasOk, bSmt) and close > e
             bEntry := e
             bStop := sl
             bTp := tp
@@ -281,12 +302,12 @@ else if sS == 1
         sS := 0
     else if sShift and not na(sBot) and canTrade and strategy.position_size == 0 and bS != 2
         e  = entryMode == "FVG edge" ? sBot : (sTop + sBot) / 2
-        sl = sHigh + stopBufTk * syminfo.mintick
+        sl = sHigh + stopBufPx
         r  = sl - e
         tp = r > 0 ? f_shortTarget(e, r) : na
         biasOk = htfBias == -1
-        q = r > 0 ? f_qty(r) : 0
-        if r > 0 and r <= maxStopPts and not na(tp) and q >= 1 and f_gradeOk(biasOk, sSmt) and close < e
+        q = r > 0 ? f_qty(r) : 0.0
+        if r > 0 and r <= maxStopPx and not na(tp) and q > 0 and f_gradeOk(biasOk, sSmt) and close < e
             sEntry := e
             sStop := sl
             sTp := tp

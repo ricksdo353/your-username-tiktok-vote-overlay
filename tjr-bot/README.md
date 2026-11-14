@@ -1,4 +1,10 @@
-# TJR NY Open Bot (MNQ / NQ)
+# TJR Session Bot (MNQ / NQ + GBPJPY)
+
+Use the **Market preset** setting to pick the market:
+- **MNQ / NQ:** trades 16:30–17:30 Israel time.
+- **GBPJPY:** trades 10:00–12:00 Israel time (London open). It uses only the previous-day and Asia levels, because London is still forming during that window.
+
+Run one chart per market. **Max trades per day** counts each chart separately. For 3 a day in total, set the GBPJPY chart to 2 and the MNQ chart to 1. For 2 in total, set both to 1.
 
 A TradingView strategy that trades the TJR-style model **only between 16:30 and 17:30 Israel time**:
 
