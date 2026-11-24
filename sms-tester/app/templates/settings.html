@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Settings · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="page-title">Settings</h1>
+
+{% if settings.warnings %}
+<section class="card card-warn">
+  {% for w in settings.warnings %}<p>⚠︎ {{ w }}</p>{% endfor %}
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>Twilio connection</h2>
+  <dl class="kv">
+    <dt>Mode</dt><dd>{{ 'Live — real SMS' if settings.is_live else 'Dry run — nothing is sent' }}</dd>
+    <dt>Account SID</dt><dd class="mono">{{ settings.masked_sid() }}</dd>
+    <dt>Auth token</dt><dd>{{ 'Set (hidden)' if settings.twilio_auth_token else 'Not set' }}</dd>
+    <dt>Sends from</dt><dd class="mono">{{ settings.sender_label() }}</dd>
+    <dt>Time zone</dt><dd>{{ settings.timezone.key }}</dd>
+  </dl>
+  <p class="muted small">Credentials are environment variables on your server. They are never sent to this page or your browser.</p>
+</section>
+
+<section class="card">
+  <h2>Twilio webhooks</h2>
+  <p class="muted small">In the Twilio Console open your phone number → <b>Messaging configuration</b> → “A message comes in” → Webhook, <b>HTTP POST</b>, and paste:</p>
+  <div class="copy-row">
+    <code class="mono" data-copy-src>{{ base }}/twilio/inbound</code>
+    <button class="btn btn-secondary btn-sm" type="button" data-copy>Copy</button>
+  </div>
+  <p class="muted small">Delivery updates go to this URL automatically{% if not settings.public_base_url %} once you set <code>PUBLIC_BASE_URL</code>{% endif %}:</p>
+  <div class="copy-row">
+    <code class="mono" data-copy-src>{{ base }}/twilio/status</code>
+    <button class="btn btn-secondary btn-sm" type="button" data-copy>Copy</button>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Safety limits</h2>
+  <dl class="kv">
+    <dt>All recipients, per day</dt><dd>{{ settings.global_daily_limit }}</dd>
+    <dt>All recipients, per minute</dt><dd>{{ settings.global_per_minute_limit }}</dd>
+    <dt>One recipient, per day</dt><dd>{{ settings.recipient_daily_limit }}</dd>
+    <dt>Gap between texts to one person</dt><dd>{{ settings.recipient_min_interval_seconds }} s</dd>
+    <dt>Identical-text block window</dt><dd>{{ settings.duplicate_window_minutes }} min</dd>
+    <dt>Max message length</dt><dd>{{ settings.max_body_chars }} chars</dd>
+    <dt>Consent requests per person</dt><dd>{{ settings.optin_max_requests }} (≥ {{ settings.optin_cooldown_hours }} h apart)</dd>
+    <dt>Auto “Reply STOP” footer</dt><dd>{{ 'On' if settings.append_opt_out_footer else 'Off' }}</dd>
+  </dl>
+  <p class="muted small">Change these with environment variables (see README) and redeploy.</p>
+</section>
+
+<section class="card">
+  <h2>Activity log</h2>
+  <ul class="audit">
+    {% for a in audit %}
+    <li><time datetime="{{ a.ts }}" data-local-time></time><span class="mono">{{ a.action }}</span><span class="muted">{{ a.detail }}</span></li>
+    {% else %}<li class="muted">No activity yet.</li>{% endfor %}
+  </ul>
+</section>
+
+<form method="post" action="{{ url_for('auth.logout') }}" class="center">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="btn btn-ghost danger" type="submit">Sign out</button>
+</form>
+{% endblock %}

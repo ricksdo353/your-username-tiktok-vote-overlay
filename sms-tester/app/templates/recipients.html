@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}People · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="page-title">People</h1>
+
+<section class="card">
+  <h2>How consent works</h2>
+  <ol class="steps">
+    <li><b>Add</b> someone who has told you they're happy to help test.</li>
+    <li><b>Send consent request</b> — one text asking them to reply YES.</li>
+    <li>When they reply <b>YES</b> they become <span class="badge badge-ok">Active</span>. Replying <b>STOP</b> at any time blocks them permanently (until they text START).</li>
+  </ol>
+</section>
+
+<section class="card">
+  <h2>Add recipient</h2>
+  <form method="post" action="{{ url_for('main.add_recipient') }}" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="field">
+      <span>Name</span>
+      <input name="name" maxlength="60" autocomplete="off" placeholder="e.g. Alex (QA phone)">
+    </label>
+    <label class="field">
+      <span>Mobile number</span>
+      <input name="phone" type="tel" inputmode="tel" autocomplete="off" required
+        placeholder="{{ '+' ~ settings.default_country_code ~ ' …' if settings.default_country_code else '+1 555 123 4567' }}">
+      <span class="hint">International format with country code{% if settings.default_country_code %} (or local — +{{ settings.default_country_code }} is added){% endif %}.</span>
+    </label>
+    <label class="check">
+      <input type="checkbox" name="attest" value="yes" required>
+      <span>This person personally agreed to receive test texts from me, and I'll only message them for testing.</span>
+    </label>
+    <button class="btn btn-primary btn-block" type="submit">Add recipient</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>Recipients <span class="count">{{ recipients|length }}</span></h2>
+  {% if not recipients %}
+  <p class="muted empty">Nobody yet.</p>
+  {% endif %}
+  <ul class="people">
+    {% for r in recipients %}
+    <li class="person">
+      <div class="row-between">
+        <div>
+          <div class="person-name">{{ r.name or 'No name' }}</div>
+          <div class="muted small mono">{{ r.phone }}</div>
+        </div>
+        {% if r.status == 'opted_out' %}<span class="badge badge-bad">Opted out</span>
+        {% elif r.status == 'pending' %}<span class="badge badge-wait">Awaiting YES</span>
+        {% elif r.paused %}<span class="badge badge-muted">Paused</span>
+        {% else %}<span class="badge badge-ok">Active</span>{% endif %}
+      </div>
+      <div class="muted small person-meta">
+        {% if r.status == 'consented' and r.consent_confirmed_at %}Consented <time datetime="{{ r.consent_confirmed_at }}" data-local-time></time>{% endif %}
+        {% if r.status == 'pending' %}Consent requests sent: {{ r.optin_requests }} / {{ settings.optin_max_requests }}{% endif %}
+        {% if r.status == 'opted_out' and r.opted_out_at %}Opted out <time datetime="{{ r.opted_out_at }}" data-local-time></time>{% endif %}
+        {% if r.last_sent %} · Last text <time datetime="{{ r.last_sent }}" data-local-time></time>{% endif %}
+      </div>
+      <div class="actions">
+        {% if r.status == 'pending' %}
+        <form method="post" action="{{ url_for('main.request_optin', rid=r.id) }}" data-confirm="Send one consent request text to {{ r.name or r.phone }}?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-primary btn-sm" type="submit">Send consent request</button>
+        </form>
+        {% endif %}
+        {% if r.status == 'consented' %}
+        <form method="post" action="{{ url_for('main.pause_recipient', rid=r.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="paused" value="{{ '0' if r.paused else '1' }}">
+          <button class="btn btn-secondary btn-sm" type="submit">{{ 'Resume' if r.paused else 'Pause' }}</button>
+        </form>
+        {% endif %}
+        {% if r.status != 'opted_out' %}
+        <form method="post" action="{{ url_for('main.delete_recipient', rid=r.id) }}" data-confirm="Remove {{ r.name or r.phone }}?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button class="btn btn-ghost btn-sm danger" type="submit">Remove</button>
+        </form>
+        {% endif %}
+      </div>
+      {% if not is_live %}
+      <div class="simulate">
+        <span class="muted small">Dry run · simulate their reply:</span>
+        {% for word in ['YES', 'STOP', 'START'] %}
+        <form method="post" action="{{ url_for('main.simulate_reply', rid=r.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input type="hidden" name="word" value="{{ word }}">
+          <button class="chip" type="submit">{{ word }}</button>
+        </form>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

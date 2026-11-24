@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Templates · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="page-title">Templates</h1>
+
+<section class="card">
+  <h2>{{ 'Edit template' if editing else 'New template' }}</h2>
+  <form method="post" action="{{ url_for('main.save_template') }}" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if editing %}<input type="hidden" name="id" value="{{ editing.id }}">{% endif %}
+    <label class="field">
+      <span>Name</span>
+      <input name="name" maxlength="60" required value="{{ editing.name if editing else '' }}" placeholder="e.g. Morning check">
+    </label>
+    <label class="field">
+      <span>Text</span>
+      <textarea name="body" rows="4" maxlength="{{ settings.max_body_chars }}" required data-body-input
+        placeholder="Hi {first_name}, …">{{ editing.body if editing else '' }}</textarea>
+      <span class="hint" data-counter data-footer="{{ '1' if settings.append_opt_out_footer else '0' }}">0 characters</span>
+    </label>
+    <div class="chips" data-placeholders>
+      {% for p in ['{first_name}', '{name}', '{date}', '{time}', '{app_name}'] %}
+      <button type="button" class="chip" data-insert="{{ p }}">{{ p }}</button>
+      {% endfor %}
+    </div>
+    <div class="row-gap">
+      <button class="btn btn-primary" type="submit">{{ 'Save changes' if editing else 'Create template' }}</button>
+      {% if editing %}<a class="btn btn-ghost" href="{{ url_for('main.templates') }}">Cancel</a>{% endif %}
+    </div>
+    {% if settings.append_opt_out_footer %}
+    <p class="muted small">“Reply STOP to opt out.” is added automatically when you send.</p>
+    {% endif %}
+  </form>
+</section>
+
+<section class="card">
+  <h2>Saved <span class="count">{{ templates|length }}</span></h2>
+  <ul class="tpl-list">
+    {% for t in templates %}
+    <li class="tpl">
+      <div class="row-between">
+        <b>{{ t.name }}</b>
+        <div class="row-gap">
+          <a class="btn btn-ghost btn-sm" href="{{ url_for('main.templates', edit=t.id) }}">Edit</a>
+          <form method="post" action="{{ url_for('main.delete_template', tid=t.id) }}" data-confirm="Delete template “{{ t.name }}”?">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-ghost btn-sm danger" type="submit">Delete</button>
+          </form>
+        </div>
+      </div>
+      <p class="tpl-body">{{ t.body }}</p>
+    </li>
+    {% else %}
+    <li class="muted empty">No templates yet.</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Sign in · {{ app_name }}{% endblock %}
+{% block body_class %}login-page{% endblock %}
+{% block content %}
+<section class="login-card card">
+  <span class="logo logo-lg" aria-hidden="true"></span>
+  <h1>{{ app_name }}</h1>
+  <p class="muted">Consent-based SMS testing. Admin access only.</p>
+  <form method="post" class="stack">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="field">
+      <span>Admin password</span>
+      <input type="password" name="password" autocomplete="current-password" required autofocus>
+    </label>
+    <button class="btn btn-primary btn-block" type="submit">Sign in</button>
+  </form>
+</section>
+{% endblock %}

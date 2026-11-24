@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import message_item %}
+{% block title %}History · {{ app_name }}{% endblock %}
+{% block content %}
+<h1 class="page-title">History</h1>
+
+<nav class="segmented" aria-label="Filter">
+  {% for key, label in [('', 'All'), ('delivered', 'Delivered'), ('pending', 'In flight'), ('failed', 'Failed'), ('inbound', 'Replies')] %}
+  <a href="{{ url_for('main.history', status=key) if key else url_for('main.history') }}" class="{{ 'active' if status == key }}">{{ label }}</a>
+  {% endfor %}
+</nav>
+
+<section class="card">
+  <p class="muted small">{{ total }} message{{ '' if total == 1 else 's' }}</p>
+  <ul class="msg-list">
+    {% for m in messages %}{{ message_item(m) }}{% else %}
+    <li class="empty muted">Nothing here.</li>
+    {% endfor %}
+  </ul>
+  <div class="pager">
+    {% if page > 1 %}<a class="btn btn-ghost btn-sm" href="{{ url_for('main.history', status=status or None, page=page-1) }}">← Newer</a>{% else %}<span></span>{% endif %}
+    {% if has_next %}<a class="btn btn-ghost btn-sm" href="{{ url_for('main.history', status=status or None, page=page+1) }}">Older →</a>{% endif %}
+  </div>
+</section>
+{% endblock %}

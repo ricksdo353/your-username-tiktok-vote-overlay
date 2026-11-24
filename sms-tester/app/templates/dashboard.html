@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% from "_macros.html" import message_item %}
+{% block content %}
+
+<section class="card power {{ 'power-on' if stats.sending_enabled else 'power-off' }}" data-power>
+  <div>
+    <p class="eyebrow">Sending</p>
+    <h1 class="power-state">{{ 'Running' if stats.sending_enabled else 'Stopped' }}</h1>
+    <p class="muted small">{{ 'Messages can be sent within your limits.' if stats.sending_enabled else 'All outgoing messages are blocked.' }}</p>
+  </div>
+  {% if stats.sending_enabled %}
+  <form method="post" action="{{ url_for('main.toggle_sending', state='stop') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-stop" type="submit">■ STOP</button>
+  </form>
+  {% else %}
+  <form method="post" action="{{ url_for('main.toggle_sending', state='start') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-start" type="submit">▶ START</button>
+  </form>
+  {% endif %}
+</section>
+
+<section class="stats" aria-label="Today">
+  <div class="stat">
+    <span class="stat-num" data-stat="sent_today">{{ stats.sent_today }}</span>
+    <span class="stat-label">sent today</span>
+    <div class="meter"><span class="meter-fill" data-meter></span></div>
+    <span class="stat-sub"><span data-stat="sent_today">{{ stats.sent_today }}</span> / <span data-stat="daily_limit">{{ stats.daily_limit }}</span> daily limit</span>
+  </div>
+  <div class="stat"><span class="stat-num ok" data-stat="delivered_today">{{ stats.delivered_today }}</span><span class="stat-label">delivered</span></div>
+  <div class="stat"><span class="stat-num wait" data-stat="in_flight_today">{{ stats.in_flight_today }}</span><span class="stat-label">in flight</span></div>
+  <div class="stat"><span class="stat-num bad" data-stat="failed_today">{{ stats.failed_today }}</span><span class="stat-label">failed</span></div>
+</section>
+
+<section class="card">
+  <h2>Send a test message</h2>
+  {% if not recipients %}
+    <div class="empty">
+      <p>No confirmed recipients yet.</p>
+      <p class="muted small">Add someone on the People tab and send them a consent request. Once they reply <b>YES</b>, they appear here.</p>
+      <a class="btn btn-secondary" href="{{ url_for('main.recipients') }}">Go to People</a>
+    </div>
+  {% else %}
+  <form method="post" action="{{ url_for('main.send') }}" class="stack" data-send-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label class="field">
+      <span>To</span>
+      <select name="recipient_id" required>
+        {% for r in recipients %}
+        <option value="{{ r.id }}">{{ r.name or 'No name' }} · {{ mask_phone(r.phone) }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="field">
+      <span>Template</span>
+      <select data-template-picker>
+        <option value="">— Write my own —</option>
+        {% for t in templates %}
+        <option value="{{ t.id }}" data-body="{{ t.body }}">{{ t.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="field">
+      <span>Message</span>
+      <textarea name="body" rows="4" maxlength="{{ settings.max_body_chars }}" required data-body-input
+        placeholder="Type a test message…"></textarea>
+      <span class="hint" data-counter data-footer="{{ '1' if settings.append_opt_out_footer else '0' }}">0 characters</span>
+    </label>
+    <button class="btn btn-primary btn-block" type="submit" {{ 'disabled' if not stats.sending_enabled }} data-send-btn>
+      {{ 'Send message' if stats.sending_enabled else 'Sending is stopped' }}
+    </button>
+    <p class="muted small center">Placeholders: {first_name} {name} {date} {time} {app_name}</p>
+  </form>
+  {% endif %}
+</section>
+
+<section class="card">
+  <div class="row-between">
+    <h2>Delivery status</h2>
+    <button class="btn btn-ghost btn-sm" type="button" data-sync>↻ Refresh</button>
+  </div>
+  <ul class="msg-list" data-message-list data-poll="{{ url_for('main.api_messages') }}" data-sync-url="{{ url_for('main.api_sync') }}">
+    {% for m in messages %}{{ message_item(m) }}{% else %}
+    <li class="empty muted">No messages yet.</li>
+    {% endfor %}
+  </ul>
+  <a class="link-more" href="{{ url_for('main.history') }}">Full history →</a>
+</section>
+{% endblock %}

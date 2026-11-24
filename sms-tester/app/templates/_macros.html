@@ -1,0 +1,29 @@
+{% macro status_pill(status, direction='outbound') -%}
+  {%- set s = status or 'unknown' -%}
+  {%- if direction == 'inbound' -%}{% set cls = 'pill-in' %}{% set label = 'received' %}
+  {%- elif s in ['delivered', 'read'] -%}{% set cls = 'pill-ok' %}{% set label = s %}
+  {%- elif s in ['failed', 'undelivered', 'canceled'] -%}{% set cls = 'pill-bad' %}{% set label = s %}
+  {%- elif s == 'sent' -%}{% set cls = 'pill-sent' %}{% set label = 'sent' %}
+  {%- else -%}{% set cls = 'pill-wait' %}{% set label = 'sending' if s == 'queued_local' else s %}
+  {%- endif -%}
+  <span class="pill {{ cls }}" data-status-pill>{{ label }}</span>
+{%- endmacro %}
+
+{% macro message_item(m) -%}
+<li class="msg" data-message-id="{{ m.id }}">
+  <div class="msg-head">
+    <span class="msg-who">
+      <span class="dir {{ 'dir-in' if m.direction == 'inbound' else 'dir-out' }}" aria-label="{{ m.direction }}">{{ '↙' if m.direction == 'inbound' else '↗' }}</span>
+      {{ m.name or m.phone }}
+      {% if m.kind == 'optin' %}<span class="tag">consent request</span>{% endif %}
+    </span>
+    {{ status_pill(m.status, m.direction) }}
+  </div>
+  <p class="msg-body">{{ m.body }}</p>
+  <div class="msg-meta">
+    <time datetime="{{ m.created_at }}" data-local-time>{{ m.created_at }}</time>
+    {% if m.name %}<span>· {{ m.phone }}</span>{% endif %}
+    {% if m.error_code %}<span class="err" data-msg-error>· Error {{ m.error_code }}{% if m.error_message %}: {{ m.error_message }}{% endif %}</span>{% endif %}
+  </div>
+</li>
+{%- endmacro %}
